@@ -24,8 +24,53 @@ function rbLibInit  = (
 
 		function assetNameClear =
 		(
-			-- Clears away or removes all asset name object properties
-			print "assetNameClear Function"
+
+
+			buffer = (" asdf aasdf
+			assssdddd
+			asset_file = W:\Projects\BraveHurts\Assets\Characters\TGD_TallGuard\TGD_TallGuard.asset
+			AssetName = C_TGD_Hood_Geo
+
+			asset_file_curType =  No Types Found
+			asset_file_curVersion =  No Types Found
+			" as StringStream )
+
+			newBuffer = stringStream ""
+
+			removeList = #("AssetName", "asset_file_curType")
+			clearListener()
+
+			while not eof buffer do
+			(
+				str = readLine buffer
+				curKey = ( filterstring str " =" )[1]
+				newStr = str
+				
+				if curKey != undefined then 
+				(
+				for curRemove in removeList do 
+					(
+						if curKey != undefined then 
+						(
+							if curKey == curRemove then
+							(
+								print ("===curKey=== " + curKey)
+								print ("===curRemove=== " + curRemove)
+								print "----------- match "
+								newStr = ""
+
+							) else (newStr =str ) -- format "%\n" str to:newb
+						)
+					)
+				)
+				format "%\n" newStr to:newBuffer
+			)
+
+			print buffer
+
+			print "---------------------------------------------"
+
+			print newBuffer
 		),
 
 		function skinDeformReset =
@@ -81,6 +126,12 @@ function rbLibInit  = (
 			print"pointCacheTestSelection Function"
 		),
 
+		function driversBreakToWorld =
+		(
+			-- reparents all selected objects to the global
+			print "driversBreakToWorld Function"
+		),
+
 		-- Creates a point that is planar with a triangle aligned to 3 selected objects, and is offset from the second object selected
 		function hypotenusePoint =
 		(
@@ -130,10 +181,22 @@ function rbLibInit  = (
 			else( messagebox" You must select exactly 3 objects " )
 		),
 
-		function driversBreakToWorld =
+		-- selects all items in the list, by animhandle
+		function selectByAnimhandle arg_list =
 		(
-			-- reparents all selected objects to the global
-			print "driversBreakToWorld Function"
+
+			print "selectByAnimhandle"
+
+			curHandles 	= arg_list
+			selList 	= #()
+
+			for curHandle in curHandles do 
+			(
+				newNode = ( getAnimByHandle curHandle )
+				append selList newNode
+			)
+
+			select selList
 		),
 
 		-- Checks current selection for objects with duplicate names
@@ -183,23 +246,12 @@ function rbLibInit  = (
 			return newReport 
 		),
 
-		-- selects all items in the list, by animhandle
-		function selectByAnimhandle arg_list =
+		function namesChildValidPrefixCheck = 
 		(
 
-			print "selectByAnimhandle"
-
-			curHandles 	= arg_list
-			selList 	= #()
-
-			for curHandle in curHandles do 
-			(
-				newNode = ( getAnimByHandle curHandle )
-				append selList newNode
-			)
-
-			select selList
-		),
+			-- Verifies all children of the selected object have the same starting name / asset tag.
+			print "namesChildValidPrefixCheck Function"
+		)
 
 		ender = undefined
 	)
