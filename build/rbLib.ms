@@ -1,10 +1,13 @@
+filein "math3dLib.ms" 		-- used for common math operations 			-- comes in as math3dLib
+filein "select3dLib.ms" 	-- used for common selection operations 	-- comes in as select3dLib
+
 function rbLibInit  = (
 	
 	struct rbLibStruct
 	(
 		version = "0.0.1",
 
-		function assetNameIsSet =
+		function assetNameIsSet arg_list =
 		(
 			-- Checks all selected objects to see if they have object properties for a stored asset name
 			print "assetNameCheck Function"
@@ -22,55 +25,66 @@ function rbLibInit  = (
 			print "checkForAssetName Function"
 		),
 
-		function assetNameClear =
+		function assetNameRestore =
 		(
+			-- Restores the asset name on the selected objects
+			print "checkForAssetName Function"
+		),
 
-
-			buffer = (" asdf aasdf
-			assssdddd
-			asset_file = W:\Projects\BraveHurts\Assets\Characters\TGD_TallGuard\TGD_TallGuard.asset
-			AssetName = C_TGD_Hood_Geo
-
-			asset_file_curType =  No Types Found
-			asset_file_curVersion =  No Types Found
-			" as StringStream )
-
-			newBuffer = stringStream ""
-
-			removeList = #("AssetName", "asset_file_curType")
-			clearListener()
+		-- Removes asset related names from the user defined field of the object properties of a node.
+		function assetNameClear arg_Node =
+		(
+			-- setup local properties
+			removeList 		= #("AssetName")	-- This list of keys that will be removed form the buffer, can be multiples
+			newBuffer 		= stringStream ""	-- An empty string to build the new data
+			buffer 			= ( ( getUserPropBuffer arg_Node ) as StringStream )
 
 			while not eof buffer do
 			(
-				str = readLine buffer
-				curKey = ( filterstring str " =" )[1]
-				newStr = str
+				str 	= readLine buffer 				-- read the line 
+				curKey 	= ( filterstring str " =" )[1] 	-- get the first part of a key / value pair
+				newStr 	= str 							-- buffer the line
 				
+				-- if the key is a valid key then 
 				if curKey != undefined then 
 				(
-				for curRemove in removeList do 
+					-- get the current remove item
+					for curRemove in removeList do 
 					(
-						if curKey != undefined then 
+						-- compare it to the key, and if they match, make the line empty
+						if curKey == curRemove then
 						(
-							if curKey == curRemove then
-							(
-								print ("===curKey=== " + curKey)
-								print ("===curRemove=== " + curRemove)
-								print "----------- match "
-								newStr = ""
-
-							) else (newStr =str ) -- format "%\n" str to:newb
+							newStr = ""
 						)
 					)
-				)
-				format "%\n" newStr to:newBuffer
+				)	
+
+				-- If the newLine is not empty, add it to the buffer
+				if newStr != "" then 
+				(
+					format "%\n" newStr to:newBuffer
+				)else()
 			)
 
-			print buffer
+			-- apply the buffer to the object properties
+			setUserPropBuffer arg_Node newBuffer
+		),
 
-			print "---------------------------------------------"
+		-- removes all user properties from selcted objects
+		function userDefinedOPClearSelection =
+		(
+			curSel = selection as array 
 
-			print newBuffer
+			for cur in curSel do 
+			(
+				setUserPropBuffer cur ""
+			)
+		),
+
+		function selectOrphanObjects = 
+		(
+			-- Returns all top level objects ( children without parents )
+			print "selectOrphanObjects"
 		),
 
 		function skinDeformReset =
@@ -137,22 +151,6 @@ function rbLibInit  = (
 		(
 			-- This is usefull for creating polvector nodes that will not shift an IK System when chosen.
 			-- The second object selected is the " knee " the new point will be created off of the hypotenuse of that point
-			
-			-- print "hypotenuseAlign Function"
-
-			function distance3D arg_a arg_b =
-			(
-				xD = ( arg_a[1] - arg_b[1] )
-				yD = ( arg_a[2] - arg_b[2] )
-				zD = ( arg_a[3] - arg_b[3] )
-				
-				return ( sqrt ( xD*xD + yD*yD + zD*zD ) )
-			)
-
-			function bisect3D arg_a arg_b = 
-			(
-				return ( ( arg_a + arg_b ) / 2 )
-			)
 
 			function hypotenuseAlign arg_objs =
 			(
@@ -161,11 +159,11 @@ function rbLibInit  = (
 				pB = arg_objs[2].pos
 				pC = arg_objs[3].pos
 
-				AB = distance3D pA pB
-				BC = distance3D pB pC
-				CA = distance3D pC pA
+				AB = math3dLib.distance3D pA pB
+				BC = math3dLib.distance3D pB pC
+				CA = math3dLib.distance3D pC pA
 				
-				pD = ( bisect3D pC pA )
+				pD = ( math3dLib.bisect3D pC pA )
 				DA = ( pB - pD )
 				newPos = ( ( DA * 2 ) + pD )
 
@@ -210,8 +208,8 @@ function rbLibInit  = (
 				duplicateNamesIds 	= #()
 			)
 
-			curSel 	= ( for i in selection collect i )--( for i in selection collect i.name )
 			newReport 	= report()
+			curSel 	= ( for i in selection collect i )--( for i in selection collect i.name )
 
 
 			for i in 1 to curSel.count do 
@@ -246,12 +244,59 @@ function rbLibInit  = (
 			return newReport 
 		),
 
+
 		function namesChildValidPrefixCheck = 
 		(
 
 			-- Verifies all children of the selected object have the same starting name / asset tag.
 			print "namesChildValidPrefixCheck Function"
-		)
+
+			struct report
+			(
+				pass 			= true,
+				nameTag 		= "",
+				failNamesIds 	= #()
+			)
+
+			newReport 	= report()
+
+			if selection.count == 1 then 
+			(
+				-- Get and store the name tag for the asset
+				masterName = selection[1].name
+				masterNameParts = FilterString masterName "_"
+				newReport.nameTag = (masterNameParts[1] + "_" + masterNameParts[2] + "_" )
+			)
+			else
+			(
+				-- fail the report
+				messagebox ( "Select exactly 1 object")
+				newReport.pass = false
+			)
+
+			if newReport.pass == true then 
+			(
+				objArr = select3dLib.collectAllChildren selection[1] includeParent:true
+
+				for curObj in objArr do 
+				(
+					curSubString = ( substring curObj.name 1 newReport.nameTag.count )
+
+					if curSubString != newReport.nameTag then 
+					(
+						curHandle = (getHandleByAnim curObj )
+						append newReport.failNamesIds curHandle
+
+						newReport.pass = false
+					)
+					else()
+				)
+			)
+
+			newReport.failNamesIds = makeUniqueArray newReport.failNamesIds
+
+			return newReport 
+		),
 
 		ender = undefined
 	)
@@ -263,8 +308,12 @@ function rbLibInit  = (
 rbLib = rbLibInit()
 
 clearListener()
---print rbLib.version
+rbLib.version
 
 --report = rbLib.namesCheckForDuplicates()
 --rbLib.selectByAnimhandle report.duplicateNamesIds
 --rbLib.hypotenusePoint()
+--rbLib.assetNameClear selection[1]
+--rbLib.userDefinedOPClearSelection()
+
+rbLib.namesChildValidPrefixCheck()
