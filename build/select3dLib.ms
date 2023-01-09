@@ -25,6 +25,24 @@ function select3dLibInit  = (
 			return allChildren
 		),
 
+		-- selects all items in the list, by animhandle
+		function selectByAnimhandle arg_list =
+		(
+
+			print "selectByAnimhandle"
+
+			curHandles 	= arg_list
+			selList 	= #()
+
+			for curHandle in curHandles do 
+			(
+				newNode = ( getAnimByHandle curHandle )
+				append selList newNode
+			)
+
+			select selList
+		),
+
 		ender = undefined
 	)	
 

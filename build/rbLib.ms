@@ -1,5 +1,6 @@
 filein "math3dLib.ms" 		-- used for common math operations 			-- comes in as math3dLib
 filein "select3dLib.ms" 	-- used for common selection operations 	-- comes in as select3dLib
+filein "userPropLib.ms" 	-- used for common user property operations -- comes in as userPropLib
 
 function rbLibInit  = (
 	
@@ -7,84 +8,10 @@ function rbLibInit  = (
 	(
 		version = "0.0.1",
 
-		function assetNameIsSet arg_list =
-		(
-			-- Checks all selected objects to see if they have object properties for a stored asset name
-			print "assetNameCheck Function"
-		),
-
-		function assetNameCheckMatch =
-		(
-			-- Checks all selected objects to see if they have object properties for a stored asset name
-			print "assetNameCheck Function"
-		),
-
-		function assetNameSet =
-		(
-			-- Sets the asset name object property on all selected objects
-			print "checkForAssetName Function"
-		),
-
-		function assetNameRestore =
-		(
-			-- Restores the asset name on the selected objects
-			print "checkForAssetName Function"
-		),
-
-		-- Removes asset related names from the user defined field of the object properties of a node.
-		function assetNameClear arg_Node =
-		(
-			-- setup local properties
-			removeList 		= #("AssetName")	-- This list of keys that will be removed form the buffer, can be multiples
-			newBuffer 		= stringStream ""	-- An empty string to build the new data
-			buffer 			= ( ( getUserPropBuffer arg_Node ) as StringStream )
-
-			while not eof buffer do
-			(
-				str 	= readLine buffer 				-- read the line 
-				curKey 	= ( filterstring str " =" )[1] 	-- get the first part of a key / value pair
-				newStr 	= str 							-- buffer the line
-				
-				-- if the key is a valid key then 
-				if curKey != undefined then 
-				(
-					-- get the current remove item
-					for curRemove in removeList do 
-					(
-						-- compare it to the key, and if they match, make the line empty
-						if curKey == curRemove then
-						(
-							newStr = ""
-						)
-					)
-				)	
-
-				-- If the newLine is not empty, add it to the buffer
-				if newStr != "" then 
-				(
-					format "%\n" newStr to:newBuffer
-				)else()
-			)
-
-			-- apply the buffer to the object properties
-			setUserPropBuffer arg_Node newBuffer
-		),
-
-		-- removes all user properties from selcted objects
-		function userDefinedOPClearSelection =
-		(
-			curSel = selection as array 
-
-			for cur in curSel do 
-			(
-				setUserPropBuffer cur ""
-			)
-		),
-
-		function selectOrphanObjects = 
+		function collectOrphanObjects = 
 		(
 			-- Returns all top level objects ( children without parents )
-			print "selectOrphanObjects"
+			print "collectOrphanObjects"
 		),
 
 		function skinDeformReset =
@@ -146,6 +73,7 @@ function rbLibInit  = (
 			print "driversBreakToWorld Function"
 		),
 
+		-- Completed 2023/01/09
 		-- Creates a point that is planar with a triangle aligned to 3 selected objects, and is offset from the second object selected
 		function hypotenusePoint =
 		(
@@ -179,24 +107,7 @@ function rbLibInit  = (
 			else( messagebox" You must select exactly 3 objects " )
 		),
 
-		-- selects all items in the list, by animhandle
-		function selectByAnimhandle arg_list =
-		(
-
-			print "selectByAnimhandle"
-
-			curHandles 	= arg_list
-			selList 	= #()
-
-			for curHandle in curHandles do 
-			(
-				newNode = ( getAnimByHandle curHandle )
-				append selList newNode
-			)
-
-			select selList
-		),
-
+		-- Completed 2023/01/09
 		-- Checks current selection for objects with duplicate names
 		function namesCheckForDuplicates =
 		(
@@ -244,11 +155,11 @@ function rbLibInit  = (
 			return newReport 
 		),
 
-
+		-- Completed 2023/01/09
+		-- Verifies all children of the selected object have the same starting name / asset tag.
 		function namesChildValidPrefixCheck = 
 		(
 
-			-- Verifies all children of the selected object have the same starting name / asset tag.
 			print "namesChildValidPrefixCheck Function"
 
 			struct report
@@ -298,6 +209,226 @@ function rbLibInit  = (
 			return newReport 
 		),
 
+		-- Completed 2023/01/09
+		-- clears all the user properties off of selected objects
+		function clearAllUserPropsSelected =
+		(
+			print "clearUserPropsSelected Function"
+
+			selArr = selection as array 
+
+			for sel in selArr do ( userPropLib.clearAll sel )
+		),
+
+
+--- universal user props start
+
+		-- Ready for test 2023/01/09
+		-- Removes all instances of a all user properties in an array from the current selection
+		function clearUserPropsInSelection arg_userProps = -- arg_userProps is an Array
+		(
+			selArr = selection as array 
+
+			for sel in selArr do ( userPropLib.clearProps sel arg_userProps )
+		),
+
+		-- Ready for test 2023/01/09
+		-- Removes all user properties from selcted objects
+		function userDefinedPropClearSelection =
+		(
+			selArr = selection as array 
+
+			for sel in selArr do ( userPropLib.clearAll sel	)
+		),
+
+		-- Ready for test 2023/01/09
+		-- Checks all selected objects to see if they have object properties for passed argument
+		function checkForUserPropInSelection arg_userProp =
+		(
+			selArr = selection as array 
+
+			for sel in selArr do ( userPropLib.isPropSet sel arg_userProp )
+		),
+
+
+-- specific user props start 
+
+
+	-- Asset Name
+
+		-- Ready for integration into UI and Data Struct 2023/01/09
+		-- Returns the parsed value for asset name
+		function collectAssetName =
+		(
+	
+			-- Get from the global data object and parse it
+			assetName = "temp"
+
+			return assetName 
+
+		),
+
+		function setUserPropsAssetNameSelected =
+		(
+		
+		),
+
+		function restoreUserPropsAssetNameSelected =
+		(
+		
+		),
+
+		function compareUserPropsAssetNameSelected =
+		(
+		
+		),
+
+	-- Asset Version
+
+		-- Ready for integration into UI and Data Struct 2023/01/09
+		-- Returns the parsed value for asset version
+		function collectAssetVersion =
+		(
+		
+			-- Get from the global data object and parse it
+			assetVersion 	= 1 -- temporary value
+			assetVersionStr = substring ( (assetVersion += 1000) as string ) 2 4 -- turn it into a 3 diget string
+
+			return assetVersionStr
+		),
+
+		function setUserPropsAssetVersionSelected =
+		(
+		
+			curProp = rbLib.collectAssetVersion()
+		
+		),
+
+		function restoreUserPropsAssetVersionSelected =
+		(
+		
+			-- Cannot restore publish version
+
+		),
+
+		function compareUserPropsAssetVersionSelected =
+		(
+			
+			curProp = rbLib.collectAssetVersion()
+		
+		),
+
+	-- Asset Date
+
+		-- Ready for test 2023/01/09
+		-- Returns a timestamp of the current time
+		function collectAssetDate =
+		(
+			curTime = getLocalTime()
+
+			curMin = ( curTime[6] as string )
+			if curMin.count == 1 then ( curMin = "0" + curMin )
+
+			parsedTime = ( "published: " + ( curTime[1] as string ) + "-" + ( curTime[2] as string ) + "-" + ( curTime[4] as string ) + "_" + ( curTime[5] as string ) + ":" + curMin )
+
+			-- Returns a timestamp of the current time ie: "published: 2023-1-9_17:36"
+			return parsedTime
+		),
+
+		function setUserPropsAssetDateSelected =
+		(
+		
+			curProp = rbLib.collectAssetDate()
+
+		),
+
+		function restoreUserPropsAssetDateSelected =
+		(
+			-- Cannot restore publish date
+		),
+
+		function compareUserPropsAssetDateSelected =
+		(
+
+			curProp = rbLib.collectAssetDate()
+
+		),
+
+
+	-- Rig Parent
+		
+		-- Ready for test 2023/01/09
+		-- Returns the parsed value for the parent object
+		function collectRigParent arg_node =
+		(
+			curParent = arg_node.parent
+		
+			curParentName 		= curParent.name
+			curParentAnimhandle = getHandleByAnim curParent
+
+			curResult = #( curParentName, curParentAnimhandle )
+
+			-- Returns an array of the name of the parent object, and its animhandle ie: #("Teapot006", 503121P)
+			return curResult
+		),
+
+		function setUserPropsRigParentSelected =
+		(
+		
+			curProp = rbLib.collectRigParent()
+
+		),
+
+		function restoreUserPropsRigParentSelected =
+		(
+		
+		),
+
+		function compareUserPropsRigParentSelected =
+		(
+
+			curProp = rbLib.collectRigParent()		
+
+		),
+	
+	-- Wirecolor
+
+		-- Ready for test 2023/01/09
+		-- Returns the parsed value for the wirecolor
+		function collectWirecolor arg_node =
+		(
+			curColor = ( arg_node.wirecolor as string )
+
+			-- Returns a string of the color ie: "(color 175 175 175)"
+			return curColor
+		),
+
+		function setUserPropsWirecolorSelected =
+		(
+
+			curProp = rbLib.collectWirecolor()
+
+		),
+
+		function restoreUserPropsWirecolorSelected =
+		(
+		
+		),
+
+		function compareUserPropsWirecolorSelected =
+		(
+
+			curProp = rbLib.collectWirecolor()
+					
+		),
+
+
+-- test skin pose set
+-- store objects parent, to restore later
+-- test controllers for any scaling 
+-- Automatically create unique names off of selection
+
+
 		ender = undefined
 	)
 
@@ -310,10 +441,15 @@ rbLib = rbLibInit()
 clearListener()
 rbLib.version
 
+
+-- rbLib.clearAllUserPropsSelected()
+
 --report = rbLib.namesCheckForDuplicates()
---rbLib.selectByAnimhandle report.duplicateNamesIds
+--select3dLib.selectByAnimhandle report.duplicateNamesIds
+
 --rbLib.hypotenusePoint()
 --rbLib.assetNameClear selection[1]
---rbLib.userDefinedOPClearSelection()
+--rbLib.userDefinedPropClearSelection()
 
-rbLib.namesChildValidPrefixCheck()
+--report = rbLib.namesChildValidPrefixCheck()
+--select3dLib.selectByAnimhandle report.failNamesIds
