@@ -1,28 +1,49 @@
+-- userPropLib - userPropLib is a collection of various functions for working with user property data on nodes in 3dsMax.
+-- aarondabelow@gmail.com
+
 function userPropLibInit  = (
 	
 	struct userPropLibStruct
 	(
 		version = "0.0.1",
 
-		function isPropSet arg_prop arg_list =
+		-- Ready for test 2023/01/10
+		-- Inspect the node to see if a valid property is set.
+		function isPropSet arg_node arg_prop =
 		(
 			-- Checks all selected objects to see if they have object properties for a stored asset name
 			print "assetNameCheck Function"
+
+			validProperty 	= true
+			curProp 		= getUserProp arg_node arg_prop
+
+			if curProp == undefined then
+				( validProperty = false )
+
+			if curProp == "" then
+				( validProperty = false )
+
+			-- Return true if the property is valid
+			return validProperty
+
 		),
 
-		function setProp arg_prop arg_val =
+		-- Ready for test 2023/01/09
+		-- Sets the user property on the passed node
+		function setProp arg_node arg_prop arg_val =
 		(
-			-- Sets the asset name object property on all selected objects
-			print "checkForAssetName Function"
+			-- Why did I just wrap this function? To be able to sanatize inputs later, possibly have hooks that go elsewhere too, like a CA on the node.
+
+			setUserProp arg_node arg_prop arg_val
 		),
 
+		-- Ready for test 2023/01/10
 		-- Removes asset related names from the user defined field of the object properties of a node.
 		function clearProps arg_node arg_props =
 		(
 			-- setup local properties
-			removeList 		= arg_props	-- This list of keys that will be removed form the buffer, can be multiples
-			-- removeList 		= #("AssetName")	-- This list of keys that will be removed form the buffer, can be multiples
-			newBuffer 		= stringStream ""	-- An empty string to build the new data
+			removeList 		= arg_props					-- This list of keys that will be removed form the buffer, can be multiples
+			newBuffer 		= stringStream ""			-- An empty string to build the new data
 			buffer 			= ( ( getUserPropBuffer arg_node ) as StringStream )
 
 			while not eof buffer do
@@ -70,4 +91,5 @@ function userPropLibInit  = (
 
 )
 
+-- Instantiate the library
 userPropLib = userPropLibInit()

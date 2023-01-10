@@ -1,6 +1,10 @@
 filein "math3dLib.ms" 		-- used for common math operations 			-- comes in as math3dLib
-filein "select3dLib.ms" 	-- used for common selection operations 	-- comes in as select3dLib
+filein "collect3dLib.ms" 	-- used for common collection operations 	-- comes in as collect3dLib
 filein "userPropLib.ms" 	-- used for common user property operations -- comes in as userPropLib
+
+
+-- ToDo: test skin pose set
+
 
 function rbLibInit  = (
 	
@@ -8,110 +12,201 @@ function rbLibInit  = (
 	(
 		version = "0.0.1",
 
-		function collectOrphanObjects = 
-		(
-			-- Returns all top level objects ( children without parents )
-			print "collectOrphanObjects"
-		),
+----------------------------
+--- PointCache Functions ---
+----------------------------
 
-		function skinDeformReset =
-		(
-			-- Functionally collapses a skin modifier and replaces it, to make sure bind pose deformations are clean and correct
-			print "skinDeformReset Function"
-		),
-
-		function skinPivotReset =
-		(
-			-- Sets the pivot of any meshes to the origin, underneath a skin, with its properties set to "always deform off"
-			print "skinPivotReset Function"
-		),
-
-		function skinToPointCaches =
-		(
-			-- Converts all skin modifiers to point caches
-			print "skinToPointCaches Function"
-		),
-
-		function skinCheckOnSelection =
-		(
-			-- Checks if there is a skin modifier on the current selection
-			print"skinCheckOnSelection Function"
-		),
-
-		function skinCheckSafeModsBelow = (
-			-- Checks if there are any topology changing modifiers below the current skin modifier
-			print"skinCheckSafeModsBelow Function"
-		),
-
-		function skinParent = 
-		(
-			-- Adds a skin modifier to the object with 100% weighting to the selected object
-			print"skinParent Function"
-		),
-
-		function skinParentConvert = 
-		(
-			-- Adds a skin modifier to the object with 100% weighting to the objects parent
-			print"skinParentConvert Function"
-		),
-
+		-- Adds a point cache modifier above the skin
 		function pointCacheAddAboveSkin =
 		(
-			-- Adds a point cache modifier above the skin
 			print"pointCacheAddAboveSkin Function"
 		),
 
+		-- Checks if there is a point cache modifier in the current objects stack
 		function pointCacheTestSelection =
 		(
-			-- Checks if there is a point cache modifier in the current objects stack
 			print"pointCacheTestSelection Function"
 		),
 
-		function driversBreakToWorld =
+----------------------
+--- Skin Functions ---
+----------------------
+
+		-- Converts all skin modifiers to point caches
+		function skinToPointCaches =
 		(
-			-- reparents all selected objects to the global
-			print "driversBreakToWorld Function"
+			print "skinToPointCaches Function"
 		),
 
-		-- Completed 2023/01/09
-		-- Creates a point that is planar with a triangle aligned to 3 selected objects, and is offset from the second object selected
-		function hypotenusePoint =
+		-- Functionally collapses a skin modifier and replaces it, to make sure bind pose deformations are clean and correct
+		function skinDeformReset arg_list =
+		(
+			print "skinDeformReset Function"
+		),
+		
+		-- Checks if there is a skin modifier on the current selection
+		function skinCheck arg_list =
+		(
+			print"skinCheckOnSelection Function"
+		),
+
+		-- Checks if there are any topology changing modifiers below the current skin modifier
+		function skinCheckSafeMods arg_list =
+		(
+			print"skinCheckSafeModsBelow Function"
+		),
+
+		-- Adds a skin modifier to the object with 100% weighting to the selected object
+		function skinParent arg_list = 
+		(
+			print"skinParent Function"
+		),
+
+		-- Adds a skin modifier to the object with 100% weighting to the objects parent
+		function skinParentConvert arg_list = 
+		(
+			print"skinParentConvert Function"
+		),
+
+		-- Ready for test 2023/01/10
+		-- Sets the pivot of any meshes to the origin, underneath a skin, with its properties set to "always deform off"
+		function skinPivotReset arg_list =
+		(
+
+			struct report
+			(
+				pass 		= true,
+				editedIds 	= #()
+			)
+
+			newReport 	= report()
+
+			for arg in arg_list do
+			(
+				try
+				(
+
+					if arg.pivot != [0,0,0] then 
+					(
+						mods = arg.modifiers
+						test = false
+						
+						for j in 1 to mods.count do
+						(	
+							if (classof mods[j]) == skin 
+							then
+							(
+								mods[j].enabled = false 
+								modPanel.setCurrentObject mods[j]
+								
+								mods[j].always_deform = false
+								arg.pivot = [0,0,0]
+								mods[j].always_deform = true
+								
+								test = true
+							)
+						)
+						
+						if test == false then arg.pivot = [0,0,0]
+
+						append newReport.editedIds ( getHandleByAnim arg )
+					)
+
+					else()
+				)
+				catch ( newReport.pass = false )
+			)
+
+			-- Returns a report with pass/fail, and a list of all nodes that were edited, if any
+			return newReport
+		),
+
+		function skinwrapStealWeights arg_Node arg_List =
+		(
+
+		)
+
+--------------------------------------
+--- Rigging / Transforms Functions ---
+--------------------------------------
+
+		-- Ready for test 2023/01/10
+		-- returns the position planar to the 3 passed objects, that is aligned to the hypotenuse of the second object. ( usefull for placing pole vectors )
+		function hypotenusePoint arg_list =
 		(
 			-- This is usefull for creating polvector nodes that will not shift an IK System when chosen.
 			-- The second object selected is the " knee " the new point will be created off of the hypotenuse of that point
 
-			function hypotenuseAlign arg_objs =
+			struct report
 			(
-				
-				pA = arg_objs[1].pos
-				pB = arg_objs[2].pos
-				pC = arg_objs[3].pos
-
-				AB = math3dLib.distance3D pA pB
-				BC = math3dLib.distance3D pB pC
-				CA = math3dLib.distance3D pC pA
-				
-				pD = ( math3dLib.bisect3D pC pA )
-				DA = ( pB - pD )
-				newPos = ( ( DA * 2 ) + pD )
-
-			 	curPoint = point position:newPos size:2 wirecolor:green
+				pass 		= true,
+				curObjects 	= arg_list,
+				hypotPoint 	= undefined
 			)
 
-			selArr = selection as array 
+			newReport 				= report()
+			newReport.curObjects 	= arg_list
 
-			if selArr.count == 3 then
+
+			if arg_list.count == 3 then
 			(
-				hypotenuseAlign selArr
+				hpotPos 				= ( math3dLib.hypotenuseAlign arg_list )
+				curPoint 				= point position:hpotPos size:2 wirecolor:green
+				newReport.hypotPoint 	= curPoint
 			)
-			else( messagebox" You must select exactly 3 objects " )
+			else
+			(
+				newReport.pass = false
+			)
+
+			-- Returns a report with pass/fail, the newly created point, and the originally passed objects
+			return newReport
 		),
 
-		-- Completed 2023/01/09
-		-- Checks current selection for objects with duplicate names
-		function namesCheckForDuplicates =
+		-- Ready for test 2023/01/10
+		-- Checks for objects not at a uniform 100% scale
+		function checkForScaledTransforms arg_list =
 		(
-			-- print "namesCheckForDuplicates Function"
+
+			struct report
+			(
+				pass 		= true,
+				failIds 	= #()
+			)
+
+			newReport 	= report()
+
+			for arg in arg_list do
+			(
+				if arg.scale != [1,1,1] then 
+				(
+					newReport.pass = false
+					append newReport.failIds ( gethandlebyanim arg )
+				)
+			)
+
+			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
+			return newReport()
+		),
+
+		function meshScaleCorrect arg_List = (
+			-- Function meshScaleCorrect bod_List
+		),
+
+		-- reparents all selected objects to the global
+		function driversBreakToWorld =
+		(
+			print "driversBreakToWorld Function"
+		),
+
+----------------------
+--- Name Functions ---
+----------------------
+
+		-- Ready for test 2023/01/10
+		-- Checks current selection for objects with duplicate names
+		function namesCheckForDuplicates arg_list =
+		(
 
 			struct report
 			(
@@ -120,8 +215,7 @@ function rbLibInit  = (
 			)
 
 			newReport 	= report()
-			curSel 	= ( for i in selection collect i )--( for i in selection collect i.name )
-
+			curSel 	= ( for i in arg_list collect i )--( for i in selection collect i.name )
 
 			for i in 1 to curSel.count do 
 			(
@@ -132,7 +226,6 @@ function rbLibInit  = (
 				for j in 1 to curSel.count do 
 				(
 					curTest = curSel[j].name
-					-- print ( curName + " ? " + curTest )
 
 					if curName == curTest then
 					(
@@ -152,15 +245,14 @@ function rbLibInit  = (
 			newReport.duplicateNamesIds = makeUniqueArray newReport.duplicateNamesIds
 			if ( newReport.duplicateNamesIds.count >= 1 ) then(newReport.pass = false)else()
 
+			-- Returns a report with pass/fail and a list of all nodes that failed, if any
 			return newReport 
 		),
 
-		-- Completed 2023/01/09
+		-- Ready for test 2023/01/10
 		-- Verifies all children of the selected object have the same starting name / asset tag.
-		function namesChildValidPrefixCheck = 
+		function namesValidChildPrefixes arg_node = 
 		(
-
-			print "namesChildValidPrefixCheck Function"
 
 			struct report
 			(
@@ -171,10 +263,10 @@ function rbLibInit  = (
 
 			newReport 	= report()
 
-			if selection.count == 1 then 
+			if arg_node.count == 1 then 
 			(
 				-- Get and store the name tag for the asset
-				masterName = selection[1].name
+				masterName = arg_node.name
 				masterNameParts = FilterString masterName "_"
 				newReport.nameTag = (masterNameParts[1] + "_" + masterNameParts[2] + "_" )
 			)
@@ -187,7 +279,7 @@ function rbLibInit  = (
 
 			if newReport.pass == true then 
 			(
-				objArr = select3dLib.collectAllChildren selection[1] includeParent:true
+				objArr = collect3dLib.collectAllChildren arg_node includeParent:true
 
 				for curObj in objArr do 
 				(
@@ -206,70 +298,135 @@ function rbLibInit  = (
 
 			newReport.failNamesIds = makeUniqueArray newReport.failNamesIds
 
+			-- Returns a report with pass/fail, the desired name and a list of all nodes that failed, if any
 			return newReport 
 		),
 
-		-- Completed 2023/01/09
-		-- clears all the user properties off of selected objects
-		function clearAllUserPropsSelected =
+		function namesMakeUnique arg_List =
 		(
-			print "clearUserPropsSelected Function"
+			-- Function namesMakeUnique arg_List
+		)
 
-			selArr = selection as array 
-
-			for sel in selArr do ( userPropLib.clearAll sel )
-		),
-
-
---- universal user props start
+----------------------------------
+--- universal user props start ---
+----------------------------------
 
 		-- Ready for test 2023/01/09
 		-- Removes all instances of a all user properties in an array from the current selection
-		function clearUserPropsInSelection arg_userProps = -- arg_userProps is an Array
+		function userPropClear arg_list arg_userProps =
 		(
-			selArr = selection as array 
+			struct report
+			(
+				pass 		= true,
+				failIds 	= #()
+			)
 
-			for sel in selArr do ( userPropLib.clearProps sel arg_userProps )
+			newReport 	= report()
+
+			for arg in arg_list do
+			(
+				try
+				(
+					userPropLib.clearProps arg arg_userProps
+				)
+				catch
+				(
+					newReport.pass = false
+					append newReport.failIds ( gethandlebyanim arg )
+				)
+			)
+
+			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
+			return newReport()
 		),
 
 		-- Ready for test 2023/01/09
 		-- Removes all user properties from selcted objects
-		function userDefinedPropClearSelection =
+		function userPropClearAll arg_list =
 		(
-			selArr = selection as array 
+			struct report
+			(
+				pass 		= true,
+				failIds 	= #()
+			)
 
-			for sel in selArr do ( userPropLib.clearAll sel	)
+			newReport 	= report()
+
+			for arg in arg_list do
+			(
+				try
+				(
+					userPropLib.clearAll arg
+				)
+				catch
+				(
+					newReport.pass = false
+					append newReport.failIds ( gethandlebyanim arg )
+				)
+			)
+
+			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
+			return newReport()
 		),
 
 		-- Ready for test 2023/01/09
 		-- Checks all selected objects to see if they have object properties for passed argument
-		function checkForUserPropInSelection arg_userProp =
+		function userPropCheck arg_list arg_userProp =
 		(
-			selArr = selection as array 
+			struct report
+			(
+				pass 		= true,
+				failIds 	= #()
+			)
 
-			for sel in selArr do ( userPropLib.isPropSet sel arg_userProp )
+			newReport 	= report()
+
+			for arg in arg_list do
+			(
+				try
+				(
+					 userPropLib.isPropSet arg arg_userProp
+				)
+				catch
+				(
+					newReport.pass = false
+					append newReport.failIds ( gethandlebyanim arg )
+				)
+			)
+
+			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
+			return newReport()
 		),
 
+--------------------------------
+-- specific user props start ---
+--------------------------------
 
--- specific user props start 
+	-- Asset Name --
 
-
-	-- Asset Name
-
-		-- Ready for integration into UI and Data Struct 2023/01/09
+		-- Ready for test 2023/01/10
 		-- Returns the parsed value for asset name
-		function collectAssetName =
+		function collectAssetName arg_node =
 		(
 	
-			-- Get from the global data object and parse it
-			assetName = "temp"
+			-- Get from the object
+			assetName = arg_node.name
 
 			return assetName 
-
 		),
 
+		-- Ready for test 2023/01/10
+		-- Assigns the user property and value
 		function setUserPropsAssetNameSelected =
 		(
+
+			selArr 	= selection as array 
+
+			for sel in selArr do
+			(
+				curProp = rbLib.collectAssetName sel
+				userPropLib.setProp sel "AssetName" curProp
+			)	
 		
 		),
 
@@ -283,7 +440,7 @@ function rbLibInit  = (
 		
 		),
 
-	-- Asset Version
+	-- Asset Version --
 
 		-- Ready for integration into UI and Data Struct 2023/01/09
 		-- Returns the parsed value for asset version
@@ -299,9 +456,7 @@ function rbLibInit  = (
 
 		function setUserPropsAssetVersionSelected =
 		(
-		
 			curProp = rbLib.collectAssetVersion()
-		
 		),
 
 		function restoreUserPropsAssetVersionSelected =
@@ -318,7 +473,7 @@ function rbLibInit  = (
 		
 		),
 
-	-- Asset Date
+	-- Asset Date --
 
 		-- Ready for test 2023/01/09
 		-- Returns a timestamp of the current time
@@ -337,8 +492,6 @@ function rbLibInit  = (
 
 		function setUserPropsAssetDateSelected =
 		(
-		
-			curProp = rbLib.collectAssetDate()
 
 		),
 
@@ -349,13 +502,11 @@ function rbLibInit  = (
 
 		function compareUserPropsAssetDateSelected =
 		(
-
 			curProp = rbLib.collectAssetDate()
-
 		),
 
 
-	-- Rig Parent
+	-- Rig Parent --
 		
 		-- Ready for test 2023/01/09
 		-- Returns the parsed value for the parent object
@@ -391,7 +542,7 @@ function rbLibInit  = (
 
 		),
 	
-	-- Wirecolor
+	-- Wirecolor --
 
 		-- Ready for test 2023/01/09
 		-- Returns the parsed value for the wirecolor
@@ -419,15 +570,8 @@ function rbLibInit  = (
 		(
 
 			curProp = rbLib.collectWirecolor()
-					
+
 		),
-
-
--- test skin pose set
--- store objects parent, to restore later
--- test controllers for any scaling 
--- Automatically create unique names off of selection
-
 
 		ender = undefined
 	)
@@ -440,16 +584,3 @@ rbLib = rbLibInit()
 
 clearListener()
 rbLib.version
-
-
--- rbLib.clearAllUserPropsSelected()
-
---report = rbLib.namesCheckForDuplicates()
---select3dLib.selectByAnimhandle report.duplicateNamesIds
-
---rbLib.hypotenusePoint()
---rbLib.assetNameClear selection[1]
---rbLib.userDefinedPropClearSelection()
-
---report = rbLib.namesChildValidPrefixCheck()
---select3dLib.selectByAnimhandle report.failNamesIds
