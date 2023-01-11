@@ -124,7 +124,7 @@ function rbLibInit  = (
 		function skinwrapStealWeights arg_Node arg_List =
 		(
 
-		)
+		),
 
 --------------------------------------
 --- Rigging / Transforms Functions ---
@@ -302,16 +302,105 @@ function rbLibInit  = (
 			return newReport 
 		),
 
+
+		-- TODO: Troubleshoot this 
 		function namesMakeUnique arg_List =
 		(
 			-- Function namesMakeUnique arg_List
-		)
+
+			struct report
+			(
+				pass 				= true,
+				updateNone   		= #(),
+				updateAppend 		= #(),
+				updateRebuild 		= #(),
+				updateCreate 		= #()
+			)
+
+			newReport = report()
+
+			for arg in arg_list do 
+			(
+
+				curHandle 	= ( ( getHandleByAnim arg ) as string )
+				curName 	= arg.name 
+				newName 	= ""
+				updateType 	= #none -- #append, #rebuild, #create
+
+				-- Test for an empty name
+				if curName == "" then (updateType = #create)
+
+				-- Test for name with no handle in filename
+				nameParts 	= ( filterstring curName curHandle )
+				if nameParts.count == 1 then ( updateType = #append )
+
+				-- Test for name with hand in filename
+				if nameParts.count >= 1 then
+				(
+					-- If only 1 instance of the handle in the string, no update to the name is needed
+					if nameParts.count == 2 then ( updateType = #none )
+					-- if there are more than 2 instances of the handle in the string, name should be rebuilt
+					if nameParts.count > 2 then ( updateType = #rebuild )
+				)
+
+				if updateType == #none then
+				(
+					append newReport.updateNone ( getAnimByHandle arg )
+				)
+
+				if updateType == #append then
+				(
+					newName = ( curName + "_" curHandle)
+					append newReport.updateAppend ( getAnimByHandle arg )
+				)
+
+				if updateType == #create then
+				(
+					newName = ( ( (classof arg ) as string ) + "_" + curHandle )
+					append newReport.updateCreate ( getAnimByHandle arg )
+				)
+
+				if updateType == #rebuild then
+				(
+
+					nameParts 	= ( filterstring curName curHandle )
+
+					for part in nameParts do 
+					(
+						lastCharacter = ( substring part part.count ( part.count - 1 ) )
+						
+						if lastCharacter == "_" then 
+						(
+							part = ( substring part 1 ( part.count - 1 ) )
+						)
+						
+						newName += (  part + "_" )
+					)
+
+					newName += ( curHandle )
+
+					print newName
+
+					append newReport.updateRebuild ( getAnimByHandle arg )
+				)
+
+				-- returns  all of the handles of the objects that were renamed, sorted into categories of what type of rename they recieved.
+				return newReport
+
+			)
+		),
+
+		function namesRemoveLastSegment args_list =
+		(
+			-- Function namesRemoveLastSegment body_list
+		),
 
 ----------------------------------
 --- universal user props start ---
 ----------------------------------
 
 		-- Ready for test 2023/01/09
+		-- ToDo : Redesign report to use additional data passed upstream
 		-- Removes all instances of a all user properties in an array from the current selection
 		function userPropClear arg_list arg_userProps =
 		(
@@ -341,6 +430,7 @@ function rbLibInit  = (
 		),
 
 		-- Ready for test 2023/01/09
+		-- ToDo : Redesign report to use additional data passed upstream
 		-- Removes all user properties from selcted objects
 		function userPropClearAll arg_list =
 		(
@@ -370,6 +460,7 @@ function rbLibInit  = (
 		),
 
 		-- Ready for test 2023/01/09
+		-- ToDo : Redesign report to use additional data passed upstream
 		-- Checks all selected objects to see if they have object properties for passed argument
 		function userPropCheck arg_list arg_userProp =
 		(
@@ -582,5 +673,16 @@ function rbLibInit  = (
 
 rbLib = rbLibInit()
 
-clearListener()
+--clearListener()
 rbLib.version
+
+
+
+----------------------
+-- Regression Tests --
+----------------------
+
+	-- FN namesMakeUnique
+		clearListener()
+		timeStamp()
+		rbLib.namesMakeUnique ( selection as array )

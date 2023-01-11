@@ -57,3 +57,15 @@ function math3dLibInit  = (
 
 -- Instantiate the library
 math3dLib = math3dLibInit()
+
+
+----------------------
+-- Regression Tests --
+----------------------
+
+	-- FN distance3D
+	-- FN bisect3D
+	-- FN hypotenuseAlign
+
+		--clearListener()
+		--math3dLib.hypotenuseAlign ( selection as array )
