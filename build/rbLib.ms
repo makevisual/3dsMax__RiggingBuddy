@@ -1,6 +1,7 @@
 filein "math3dLib.ms" 		-- used for common math operations 			-- comes in as math3dLib
 filein "collect3dLib.ms" 	-- used for common collection operations 	-- comes in as collect3dLib
 filein "userPropLib.ms" 	-- used for common user property operations -- comes in as userPropLib
+filein "strLib.ms" 			-- used for common string operations 		-- comes in as strLib
 
 
 -- ToDo: test skin pose set
@@ -302,11 +303,38 @@ function rbLibInit  = (
 			return newReport 
 		),
 
-
-		-- TODO: Troubleshoot this 
-		function namesMakeUnique arg_List =
+		-- Completed 2023/01/18
+		-- uses the data collected in the namesMakeUniqueCollect function, to apply the new name
+		function namesMakeUnique arg_collection =
 		(
-			-- Function namesMakeUnique arg_List
+			hanList = #()
+
+			-- collect all relevant objects into one list
+			join hanList arg_collection.updateAppend
+			join hanList arg_collection.updateRebuild
+			join hanList arg_collection.updateCreate
+
+			-- Do the rename
+			for han in hanList do 
+			(
+				curObj = getAnimByHandle (han.handle )
+				curObj.name = han.newName
+			)
+		),
+
+		-- Completed 2023/01/18
+		-- Operates on a selection of objects. Looks for any instance of their animhandle node id in their name
+		-- depending on multiple cases, this function will flag, and prepare a unique name to that object
+		-- then it will return a collection of all the nodes, with a prepared name, and animhandle.
+		-- this is intended to be run and passed to the namesMakeUnique function, which will actually
+		-- process the items.
+		function namesMakeUniqueCollect arg_list =
+		(
+			struct handleAndName
+			(
+				handle 	= undefined,
+				newName = undefined
+			)
 
 			struct report
 			(
@@ -319,51 +347,56 @@ function rbLibInit  = (
 
 			newReport = report()
 
+			-- Go through each of the items, and flag them for the appropriate type of processing
 			for arg in arg_list do 
 			(
 
 				curHandle 	= ( ( getHandleByAnim arg ) as string )
 				curName 	= arg.name 
 				newName 	= ""
-				updateType 	= #none -- #append, #rebuild, #create
+				updateType 	= #undefined -- #append, #rebuild, #create
+				
+				-- Collect the parts of the name, without the animhandle in it
+				nameParts 	= ( strLib.splitByToken curName curHandle)
+				
+				print ( "-Name Parts-")
+				print nameParts
 
 				-- Test for an empty name
-				if curName == "" then (updateType = #create)
-
-				-- Test for name with no handle in filename
-				nameParts 	= ( filterstring curName curHandle )
-				if nameParts.count == 1 then ( updateType = #append )
-
-				-- Test for name with hand in filename
-				if nameParts.count >= 1 then
-				(
-					-- If only 1 instance of the handle in the string, no update to the name is needed
-					if nameParts.count == 2 then ( updateType = #none )
-					-- if there are more than 2 instances of the handle in the string, name should be rebuilt
-					if nameParts.count > 2 then ( updateType = #rebuild )
-				)
+				-- If no instances of the handle in the string, flag for appending
+				if nameParts.count 	== 1 then ( updateType = #rebuild )
+				-- If only 1 instance of the handle in the string, no update to the name is needed
+				if nameParts.count 	== 2 then ( updateType = #none )
+				-- if there are more than 2 instances of the handle in the string, name should be rebuilt
+				if nameParts.count 	> 2 then ( updateType = #rebuild )
+				-- If the name is empty, then flag for creation
+				if curName 			== "" then (updateType = #create)
 
 				if updateType == #none then
 				(
-					append newReport.updateNone ( getAnimByHandle arg )
-				)
+					-- define the object and name, and then append it to the appropriate group
+					han 		= handleAndName()
+					han.handle  = ( gethandlebyanim arg )
+					han.newName = arg.name
 
-				if updateType == #append then
-				(
-					newName = ( curName + "_" curHandle)
-					append newReport.updateAppend ( getAnimByHandle arg )
+					append newReport.updateNone han
 				)
 
 				if updateType == #create then
 				(
-					newName = ( ( (classof arg ) as string ) + "_" + curHandle )
-					append newReport.updateCreate ( getAnimByHandle arg )
+
+					-- define the object and name, and then append it to the appropriate group
+					han 		= handleAndName()
+					han.handle  = ( gethandlebyanim arg )
+					han.newName = ( ( (classof arg ) as string ) + "_" + curHandle )
+
+					append newReport.updateCreate han
 				)
 
 				if updateType == #rebuild then
 				(
 
-					nameParts 	= ( filterstring curName curHandle )
+					--nameParts 	= ( filterstring curName curHandle splitEmptyTokens:false )
 
 					for part in nameParts do 
 					(
@@ -379,20 +412,17 @@ function rbLibInit  = (
 
 					newName += ( curHandle )
 
-					print newName
+					-- define the object and name, and then append it to the appropriate group
+					han 		= handleAndName()
+					han.handle  = ( gethandlebyanim arg )
+					han.newName = newName
 
-					append newReport.updateRebuild ( getAnimByHandle arg )
+					append newReport.updateRebuild han
 				)
-
-				-- returns  all of the handles of the objects that were renamed, sorted into categories of what type of rename they recieved.
-				return newReport
-
 			)
-		),
 
-		function namesRemoveLastSegment args_list =
-		(
-			-- Function namesRemoveLastSegment body_list
+			-- returns  all of the handles of the objects that were renamed, sorted into categories of what type of rename they recieved.
+			return newReport
 		),
 
 ----------------------------------
@@ -518,7 +548,6 @@ function rbLibInit  = (
 				curProp = rbLib.collectAssetName sel
 				userPropLib.setProp sel "AssetName" curProp
 			)	
-		
 		),
 
 		function restoreUserPropsAssetNameSelected =
@@ -554,14 +583,12 @@ function rbLibInit  = (
 		(
 		
 			-- Cannot restore publish version
-
 		),
 
 		function compareUserPropsAssetVersionSelected =
 		(
 			
 			curProp = rbLib.collectAssetVersion()
-		
 		),
 
 	-- Asset Date --
@@ -618,7 +645,6 @@ function rbLibInit  = (
 		(
 		
 			curProp = rbLib.collectRigParent()
-
 		),
 
 		function restoreUserPropsRigParentSelected =
@@ -630,7 +656,6 @@ function rbLibInit  = (
 		(
 
 			curProp = rbLib.collectRigParent()		
-
 		),
 	
 	-- Wirecolor --
@@ -649,7 +674,6 @@ function rbLibInit  = (
 		(
 
 			curProp = rbLib.collectWirecolor()
-
 		),
 
 		function restoreUserPropsWirecolorSelected =
@@ -672,8 +696,6 @@ function rbLibInit  = (
 )
 
 rbLib = rbLibInit()
-
---clearListener()
 rbLib.version
 
 
@@ -682,7 +704,9 @@ rbLib.version
 -- Regression Tests --
 ----------------------
 
+	-- FN namesMakeUniqueCollect
 	-- FN namesMakeUnique
-		clearListener()
-		timeStamp()
-		rbLib.namesMakeUnique ( selection as array )
+		-- clearListener()
+		-- timeStamp()
+		-- result = ( rbLib.namesMakeUniqueCollect ( selection as array ) )
+		-- rbLib.namesMakeUnique result
