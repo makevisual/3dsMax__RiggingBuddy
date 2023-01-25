@@ -148,6 +148,20 @@ function collect3dLibInit  = (
 			return filteredList
 		),
 
+		-- Completed 2023/01/25
+		-- Collects all objects with the passed name
+		function collectNodeByName arg_name =
+		(
+			validNodes = #()
+
+			for o in objects do
+			(
+				if o.name == arg_name then ( append validNodes o )	
+			)
+
+			return validNodes
+		),
+
 		ender = undefined
 	)	
 
@@ -160,6 +174,10 @@ collect3dLib = collect3dLibInit()
 ----------------------
 -- Regression Tests --
 ----------------------
+
+	-- FN collectAllChildren
+		-- clearListener()
+		-- result = collect3dLib.collectNodeByName "Teapot001"
 
 	-- FN collectAllChildren
 		-- clearListener()

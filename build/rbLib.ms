@@ -359,8 +359,8 @@ function rbLibInit  = (
 				-- Collect the parts of the name, without the animhandle in it
 				nameParts 	= ( strLib.splitByToken curName curHandle)
 				
-				print ( "-Name Parts-")
-				print nameParts
+				-- print ( "-Name Parts-")
+				-- print nameParts
 
 				-- Test for an empty name
 				-- If no instances of the handle in the string, flag for appending
@@ -527,7 +527,7 @@ function rbLibInit  = (
 
 		-- Ready for test 2023/01/10
 		-- Returns the parsed value for asset name
-		function collectAssetName arg_node =
+		function collectNodeName arg_node =
 		(
 	
 			-- Get from the object
@@ -538,7 +538,7 @@ function rbLibInit  = (
 
 		-- Ready for test 2023/01/10
 		-- Assigns the user property and value
-		function setUserPropsAssetNameSelected =
+		function setUserPropsNodeName arg_node = 
 		(
 
 			selArr 	= selection as array 
@@ -550,142 +550,283 @@ function rbLibInit  = (
 			)	
 		),
 
-		function restoreUserPropsAssetNameSelected =
+		function restoreUserPropsNodeNameSelected =
 		(
 		
 		),
 
-		function compareUserPropsAssetNameSelected =
+		function compareUserPropsNodeNameSelected =
 		(
 		
-		),
-
-	-- Asset Version --
-
-		-- Ready for integration into UI and Data Struct 2023/01/09
-		-- Returns the parsed value for asset version
-		function collectAssetVersion =
-		(
-		
-			-- Get from the global data object and parse it
-			assetVersion 	= 1 -- temporary value
-			assetVersionStr = substring ( (assetVersion += 1000) as string ) 2 4 -- turn it into a 3 diget string
-
-			return assetVersionStr
-		),
-
-		function setUserPropsAssetVersionSelected =
-		(
-			curProp = rbLib.collectAssetVersion()
-		),
-
-		function restoreUserPropsAssetVersionSelected =
-		(
-		
-			-- Cannot restore publish version
-		),
-
-		function compareUserPropsAssetVersionSelected =
-		(
-			
-			curProp = rbLib.collectAssetVersion()
 		),
 
 	-- Asset Date --
 
-		-- Ready for test 2023/01/09
-		-- Returns a timestamp of the current time
-		function collectAssetDate =
+		-- Completed 2023/01/25
+		-- Returns a timestamp of the current time, as an integer array, and as a parsed string
+		function collectNodeDate =
 		(
+
+			struct report
+			(
+				localTime 	= undefined,
+				parsedTime 	= undefined
+			)
+
+			newReport = report()
+
 			curTime = getLocalTime()
 
+			-- padd mins if needed
 			curMin = ( curTime[6] as string )
 			if curMin.count == 1 then ( curMin = "0" + curMin )
 
 			parsedTime = ( "published: " + ( curTime[1] as string ) + "-" + ( curTime[2] as string ) + "-" + ( curTime[4] as string ) + "_" + ( curTime[5] as string ) + ":" + curMin )
 
-			-- Returns a timestamp of the current time ie: "published: 2023-1-9_17:36"
-			return parsedTime
+			-- Stores a timestamp as an array of integers for easy comparison later
+			newReport.localTime 	= curTime
+			-- Stores a timestamp of the current time ie: "published: 2023-1-9_17:36"
+			newReport.parsedTime 	= parsedTime
+
+			return newReport
 		),
 
-		function setUserPropsAssetDateSelected =
+		-- Completed 2023/01/25
+		-- Returns a timestamp of the current time, as an integer array, and as a parsed string
+		function setUserPropsNodeDate arg_node = 
 		(
+			result = rbLib.collectNodeDate()
 
+			userPropLib.setProp arg_node "NodePublishDate" result.localTime 		
+			userPropLib.setProp arg_node "NodePublishDateParsed" result.parsedTime
 		),
-
-		function restoreUserPropsAssetDateSelected =
-		(
-			-- Cannot restore publish date
-		),
-
-		function compareUserPropsAssetDateSelected =
-		(
-			curProp = rbLib.collectAssetDate()
-		),
-
 
 	-- Rig Parent --
 		
-		-- Ready for test 2023/01/09
-		-- Returns the parsed value for the parent object
+		-- Completed 2023/01/25
+		-- Returns if the object has a parent, and that parent name and animhandle
 		function collectRigParent arg_node =
 		(
+
+			struct report
+			(
+				orphan 				= undefined,
+				parentName 			= undefined,
+				parentAnimhandle 	= undefined
+			)
+
+			newReport 			= report()
+
+
 			curParent = arg_node.parent
-		
-			curParentName 		= curParent.name
-			curParentAnimhandle = getHandleByAnim curParent
 
-			curResult = #( curParentName, curParentAnimhandle )
+			if curParent != undefined
+			then 
+			(
+				newReport.orphan 			= false
+				newReport.parentName 		= arg_node.parent.name
+				newReport.parentAnimhandle 	= ( getHandleByAnim arg_node.parent )
+			)
 
-			-- Returns an array of the name of the parent object, and its animhandle ie: #("Teapot006", 503121P)
-			return curResult
+			if curParent == undefined
+			then 
+			(
+				newReport.orphan = true
+			)
+
+			return newReport
 		),
 
-		function setUserPropsRigParentSelected =
+		-- Completed 2023/01/25
+		-- Gets the stored parent name and animhandle on the node
+		function getUserPropsRigParent arg_node =
+		(
+			struct report
+			(
+				orphan 				= undefined,
+				parentName 			= undefined,
+				parentAnimhandle 	= undefined
+			)
+
+			newReport 			= report()
+			
+			newReport.parentName 		= getUserProp arg_node "NodeParentName"
+			newReport.parentAnimhandle 	= getUserProp arg_node "NodeParentHandle"
+			
+			if newReport.parentName == "undefined"
+			then 
+			(
+				newReport.orphan = true
+			)
+			
+			if newReport.parentName != "undefined"
+			then 
+			(
+				newReport.orphan = false
+			)
+
+			return newReport
+		),
+
+		-- Completed 2023/01/25
+		-- Stores the current parent name and animhandle on the node
+		function setUserPropsRigParent arg_node =
 		(
 		
-			curProp = rbLib.collectRigParent()
+			result = rbLib.collectRigParent arg_node 
+
+			userPropLib.setProp arg_node "NodeParentName" 	result.parentName 		
+			userPropLib.setProp arg_node "NodeParentHandle" result.parentAnimhandle
 		),
 
-		function restoreUserPropsRigParentSelected =
+		-- Completed 2023/01/25
+		-- First try to find node by animhandle, then by name, and parent the arg to it
+		-- Throws warnings when unable to finde matching animhandle node, and 0 or 2+ objects with matching name.
+		function restoreUserPropsRigParent arg_node =
 		(
-		
+			-- Is there data strored
+			if ( userPropLib.isPropSet arg_node "NodeParentName" ) then 
+			(
+				-- retrieve all the data
+				parentInfo = rbLib.getUserPropsRigParent arg_node
+
+				-- Try Case for animhandle match
+				try
+				(
+					curNode = ( getanimbyhandle parentInfo.parentAnimhandle )
+
+					-- compare that node to the stored name
+					if ( curNode.name != parentInfo.parentName ) then 
+					(
+						-- Throw a warning if animhandle retrieved name and stored name do not match
+						print (" Warning: " + arg_node.name + " new parent name does not match stored parent name.")
+					)
+					-- parent away
+					arg_node.parent = curNode
+				)
+				-- Case for if no animhandle match
+				catch
+				(
+					parentCantidates = collect3dLib.collectNodeByName parentInfo.parentName
+
+					-- print "parentCantidates"
+					-- print parentCantidates
+
+					if parentCantidates.count == 1 then 
+					(
+						-- parent away
+						arg_node.parent = curNode
+					)
+					if parentCantidates.count == 0 then 
+					(
+						print (" Error: " + arg_node.name + " - Unable to find any nodes that match stored parent data")
+					)
+					if parentCantidates.count >= 2 then 
+					(
+						print (" Error: " + arg_node.name + " - No matching node AnimHandle, and multiple name matches for parent")
+					)
+				)
+			)
 		),
 
-		function compareUserPropsRigParentSelected =
+		-- Completed 2023/01/25
+		-- Compares and returns the values for the current and stored property
+		function compareUserPropsRigParent arg_node =
 		(
+			struct report
+			(
+				pass 		= undefined,
+				currentVal 	= undefined,
+				storedVal 	= undefined
+			)
 
-			curProp = rbLib.collectRigParent()		
+			newReport 	= report()
+
+			newReport.currentVal	= rbLib.collectRigParent arg_node
+			newReport.storedVal 	= rbLib.getUserPropsRigParent arg_node
+
+
+			parentName
+
+			if newReport.currentVal.parentName == newReport.storedVal.parentName then
+			(
+				newReport.pass = true 
+			)
+			else 
+			(
+				newReport.pass = false
+			)
+
+			return newReport
 		),
-	
+
 	-- Wirecolor --
 
-		-- Ready for test 2023/01/09
+		-- Completed 2023/01/25
 		-- Returns the parsed value for the wirecolor
 		function collectWirecolor arg_node =
 		(
 			curColor = ( arg_node.wirecolor as string )
-
-			-- Returns a string of the color ie: "(color 175 175 175)"
 			return curColor
 		),
 
-		function setUserPropsWirecolorSelected =
+		-- Completed 2023/01/25
+		-- Stores the current wirecolor on the node
+		function setUserPropsWirecolor arg_node =
 		(
-
-			curProp = rbLib.collectWirecolor()
+			curProp = rbLib.collectWirecolor arg_node
+			userPropLib.setProp arg_node "NodeWirecolor" curProp
 		),
 
-		function restoreUserPropsWirecolorSelected =
+		-- Completed 2023/01/25
+		-- Retrieves the current wirecolor on the node
+		function getUserPropsWirecolor arg_node =
 		(
-		
+			curColor = getUserProp arg_node "NodeWirecolor"
+			return ( curColor )
 		),
 
-		function compareUserPropsWirecolorSelected =
+		-- Completed 2023/01/25
+		-- Restores the current wirecolor on the node
+		function restoreUserPropsWirecolor arg_node =
 		(
+			if ( userPropLib.isPropSet arg_node "NodeWirecolor" ) then 
+			(
+				curColor = rbLib.getUserPropsWirecolor arg_node 
+				arg_node.wirecolor = ( execute curColor )
+			)
+			else
+			(
+				print ( " 'NodeWirecolor' property not set on: " + arg_node.name )
+			)
+		),
 
-			curProp = rbLib.collectWirecolor()
+		-- Completed 2023/01/25
+		-- Compares and returns the values for the current and stored property
+		function compareUserPropsWirecolor arg_Node =
+		(
+			struct report
+			(
+				pass 		= undefined,
+				currentVal 	= undefined,
+				storedVal 	= undefined
+			)
 
+			newReport 	= report()
+
+			newReport.currentVal	= rbLib.collectWirecolor arg_node
+			newReport.storedVal 	= rbLib.getUserPropsWirecolor arg_node
+
+			if newReport.currentVal == newReport.storedVal then
+			(
+				newReport.pass = true 
+			)
+			else 
+			(
+				newReport.pass = false
+			)
+
+			return newReport
 		),
 
 		ender = undefined
@@ -710,3 +851,75 @@ rbLib.version
 		-- timeStamp()
 		-- result = ( rbLib.namesMakeUniqueCollect ( selection as array ) )
 		-- rbLib.namesMakeUnique result
+
+	-- Asset Name --	
+		-- FN collectNodeName
+			clearListener()
+			timeStamp()
+			result = ( rbLib.collectNodeName ( selection as array ) )
+
+	-- Asset Date --
+		-- FN collectNodeDate
+			-- clearListener()
+			-- timeStamp()
+			-- rbLib.collectNodeDate()
+
+		-- FN setUserPropsNodeDate
+			-- clearListener()
+			-- timeStamp()
+			-- for sel in selArr do ( print ( rbLib.setUserPropsNodeDate sel ) ) 
+
+	-- Rig Parent --
+
+		-- FN collectRigParent
+		-- FN setUserPropsRigParent	
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = selection as array 
+			-- print ( "-- setUserPropsRigParent -- ")
+			-- for sel in selArr do ( print ( rbLib.setUserPropsRigParent sel ) ) 
+
+		-- FN getUserPropsRigParent
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = selection as array 
+			-- print ( "-- getUserPropsRigParent -- ")
+			-- for sel in selArr do ( print ( rbLib.getUserPropsRigParent sel ) ) 
+
+		-- FN getUserPropsRigParent
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = selection as array 
+			-- print ( "-- restoreUserPropsRigParent -- ")
+			-- for sel in selArr do ( rbLib.restoreUserPropsRigParent sel )
+
+		-- FN compareUserPropsRigParent
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = selection as array 
+			-- print ( "-- compareUserPropsRigParent -- ")
+			-- for sel in selArr do ( print ( rbLib.compareUserPropsRigParent sel ) )
+
+	-- Wirecolor --
+
+		-- FN collectWirecolor
+		-- FN setUserPropsWirecolor	
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = selection as array 
+			-- print ( "-- collectWirecolor -- ")
+			-- for sel in selArr do ( print ( rbLib.collectWirecolor  sel ) ) 
+			-- print ( "-- collectWirecolor -- ")
+			-- for sel in selArr do ( rbLib.setUserPropsWirecolor sel ) 
+	
+		-- FN restoreUserPropsWirecolor
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = selection as array 
+			-- print ( "-- restoreUserPropsWirecolor -- ")
+			-- for sel in selArr do ( rbLib.restoreUserPropsWirecolor sel )
+	
+		-- FN compareUserPropsWirecolor
+			-- clearListener()
+			-- timeStamp()
+			-- for sel in selArr do ( print ( rbLib.compareUserPropsWirecolor sel ))

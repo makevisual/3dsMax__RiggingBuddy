@@ -71,6 +71,15 @@ function userPropLibInit  = (
 			setUserPropBuffer arg_node ""
 		),
 
+--		function compareProp arg_node arg_prop arg_val =
+--		(
+--			match = undefined 
+--
+--			
+--
+--			return match 
+--		),
+
 		ender = undefined
 	)	
 
