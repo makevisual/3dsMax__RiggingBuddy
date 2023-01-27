@@ -200,15 +200,13 @@ function rbLibInit  = (
 			print "driversBreakToWorld Function"
 		),
 
-----------------------
 --- Name Functions ---
-----------------------
 
-		-- Ready for test 2023/01/10
-		-- Checks current selection for objects with duplicate names
+		-- Completed 2023/01/18
+		-- Checks current selection for objects with duplicate names, returs a true/false if passed, and a list of all objects
+		-- animhandles with duplicate names.
 		function namesCheckForDuplicates arg_list =
 		(
-
 			struct report
 			(
 				pass 				= true,
@@ -252,7 +250,7 @@ function rbLibInit  = (
 
 		-- Ready for test 2023/01/10
 		-- Verifies all children of the selected object have the same starting name / asset tag.
-		function namesValidChildPrefixes arg_node = 
+		function namesValidChildPrefixes arg_list = 
 		(
 
 			struct report
@@ -264,11 +262,16 @@ function rbLibInit  = (
 
 			newReport 	= report()
 
+
+			-- TODO: Rework with the collect3dLib.collectProtoplasts and collect3dLib.collectAllChildren functions to operate on
+			-- Seperate heirarchies at the same time.
+
 			if arg_node.count == 1 then 
 			(
 				-- Get and store the name tag for the asset
 				masterName = arg_node.name
 				masterNameParts = FilterString masterName "_"
+				-- Builds a name tag, based off of the object, should look something like "C_TGD_"
 				newReport.nameTag = (masterNameParts[1] + "_" + masterNameParts[2] + "_" )
 			)
 			else
@@ -425,13 +428,10 @@ function rbLibInit  = (
 			return newReport
 		),
 
-----------------------------------
 --- universal user props start ---
-----------------------------------
 
-		-- Ready for test 2023/01/09
-		-- ToDo : Redesign report to use additional data passed upstream
-		-- Removes all instances of a all user properties in an array from the current selection
+		-- Completed 2023/01/26
+		-- Removes all instances of a all user properties ( in an array ) in an array from the current selection
 		function userPropClear arg_list arg_userProps =
 		(
 			struct report
@@ -456,11 +456,10 @@ function rbLibInit  = (
 			)
 
 			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
-			return newReport()
+			return newReport
 		),
 
-		-- Ready for test 2023/01/09
-		-- ToDo : Redesign report to use additional data passed upstream
+		-- Completed 2023/01/26
 		-- Removes all user properties from selcted objects
 		function userPropClearAll arg_list =
 		(
@@ -486,11 +485,10 @@ function rbLibInit  = (
 			)
 
 			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
-			return newReport()
+			return newReport
 		),
 
-		-- Ready for test 2023/01/09
-		-- ToDo : Redesign report to use additional data passed upstream
+		-- Completed 2023/01/26
 		-- Checks all selected objects to see if they have object properties for passed argument
 		function userPropCheck arg_list arg_userProp =
 		(
@@ -504,60 +502,87 @@ function rbLibInit  = (
 
 			for arg in arg_list do
 			(
-				try
+				if ( ( userPropLib.isPropSet arg arg_userProp ) == false ) then
 				(
-					 userPropLib.isPropSet arg arg_userProp
-				)
-				catch
-				(
-					newReport.pass = false
-					append newReport.failIds ( gethandlebyanim arg )
+					newReport.pass = false	
+					append newReport.failIds ( gethandlebyanim arg )	
 				)
 			)
 
 			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
-			return newReport()
+			return newReport
 		),
 
---------------------------------
 -- specific user props start ---
---------------------------------
 
 	-- Asset Name --
 
-		-- Ready for test 2023/01/10
+		-- Completed 2023/01/25
 		-- Returns the parsed value for asset name
 		function collectNodeName arg_node =
 		(
-	
-			-- Get from the object
+				-- Get from the object
 			assetName = arg_node.name
 
 			return assetName 
 		),
 
-		-- Ready for test 2023/01/10
+		-- Completed 2023/01/26
 		-- Assigns the user property and value
 		function setUserPropsNodeName arg_node = 
+		( 
+			curProp = rbLib.collectNodeName arg_node
+			userPropLib.setProp arg_node "NodeName" curProp
+		),
+
+		-- Completed 2023/01/26
+		-- Gets the stored value for the property passed
+		function getUserPropsNodeName arg_node =
 		(
+			curProp = getUserProp arg_node "NodeName"
 
-			selArr 	= selection as array 
+			return curProp
+		),
 
-			for sel in selArr do
+		-- Completed 2023/01/26
+		-- Restores the name to the object if one is stroed.
+		function restoreUserPropsNodeName arg_node = 
+		(
+			report = rbLib.compareUserPropsNodeName arg_node
+
+			-- Only change the name if a valid one is stored, and it does not match the current name
+			if ( report.pass == false ) then 
 			(
-				curProp = rbLib.collectAssetName sel
-				userPropLib.setProp sel "AssetName" curProp
-			)	
+				arg_node.name = rbLib.getUserPropsNodeName arg_node
+			)
 		),
 
-		function restoreUserPropsNodeNameSelected =
+		-- Completed 2023/01/26
+		-- Compares and returns the values for the current and stored property
+		function compareUserPropsNodeName arg_node = 
 		(
-		
-		),
+			struct report
+			(
+				pass 		= undefined,
+				currentVal 	= undefined,
+				storedVal 	= undefined
+			)
 
-		function compareUserPropsNodeNameSelected =
-		(
-		
+			newReport = report()
+
+			newReport.currentVal = rbLib.collectNodeName arg_node
+			newReport.storedVal = rbLib.getUserPropsNodeName arg_node
+
+			if newReport.currentVal == newReport.storedVal then
+			(
+				newReport.pass = true 
+			)
+			else 
+			(
+				newReport.pass = false
+			)
+
+			return newReport
 		),
 
 	-- Asset Date --
@@ -745,9 +770,6 @@ function rbLibInit  = (
 			newReport.currentVal	= rbLib.collectRigParent arg_node
 			newReport.storedVal 	= rbLib.getUserPropsRigParent arg_node
 
-
-			parentName
-
 			if newReport.currentVal.parentName == newReport.storedVal.parentName then
 			(
 				newReport.pass = true 
@@ -845,81 +867,126 @@ rbLib.version
 -- Regression Tests --
 ----------------------
 
-	-- FN namesMakeUniqueCollect
-	-- FN namesMakeUnique
-		-- clearListener()
-		-- timeStamp()
-		-- result = ( rbLib.namesMakeUniqueCollect ( selection as array ) )
-		-- rbLib.namesMakeUnique result
+	--- Name Functions ---
 
-	-- Asset Name --	
-		-- FN collectNodeName
-			clearListener()
-			timeStamp()
-			result = ( rbLib.collectNodeName ( selection as array ) )
-
-	-- Asset Date --
-		-- FN collectNodeDate
-			-- clearListener()
-			-- timeStamp()
-			-- rbLib.collectNodeDate()
-
-		-- FN setUserPropsNodeDate
-			-- clearListener()
-			-- timeStamp()
-			-- for sel in selArr do ( print ( rbLib.setUserPropsNodeDate sel ) ) 
-
-	-- Rig Parent --
-
-		-- FN collectRigParent
-		-- FN setUserPropsRigParent	
+		-- FN namesCheckForDuplicates
 			-- clearListener()
 			-- timeStamp()
 			-- selArr = selection as array 
-			-- print ( "-- setUserPropsRigParent -- ")
-			-- for sel in selArr do ( print ( rbLib.setUserPropsRigParent sel ) ) 
+			-- print ( rbLib.namesCheckForDuplicates selArr )
 
-		-- FN getUserPropsRigParent
+		-- FN namesMakeUniqueCollect
+		-- FN namesMakeUnique
 			-- clearListener()
 			-- timeStamp()
-			-- selArr = selection as array 
-			-- print ( "-- getUserPropsRigParent -- ")
-			-- for sel in selArr do ( print ( rbLib.getUserPropsRigParent sel ) ) 
-
-		-- FN getUserPropsRigParent
-			-- clearListener()
-			-- timeStamp()
-			-- selArr = selection as array 
-			-- print ( "-- restoreUserPropsRigParent -- ")
-			-- for sel in selArr do ( rbLib.restoreUserPropsRigParent sel )
-
-		-- FN compareUserPropsRigParent
-			-- clearListener()
-			-- timeStamp()
-			-- selArr = selection as array 
-			-- print ( "-- compareUserPropsRigParent -- ")
-			-- for sel in selArr do ( print ( rbLib.compareUserPropsRigParent sel ) )
-
-	-- Wirecolor --
-
-		-- FN collectWirecolor
-		-- FN setUserPropsWirecolor	
-			-- clearListener()
-			-- timeStamp()
-			-- selArr = selection as array 
-			-- print ( "-- collectWirecolor -- ")
-			-- for sel in selArr do ( print ( rbLib.collectWirecolor  sel ) ) 
-			-- print ( "-- collectWirecolor -- ")
-			-- for sel in selArr do ( rbLib.setUserPropsWirecolor sel ) 
+			-- result = ( rbLib.namesMakeUniqueCollect ( selection as array ) )
+			-- rbLib.namesMakeUnique result
 	
-		-- FN restoreUserPropsWirecolor
+	-- universal user props start ---
+		-- FN userPropClear
 			-- clearListener()
 			-- timeStamp()
 			-- selArr = selection as array 
-			-- print ( "-- restoreUserPropsWirecolor -- ")
-			-- for sel in selArr do ( rbLib.restoreUserPropsWirecolor sel )
-	
-		-- FN compareUserPropsWirecolor
+			-- for sel in selArr do ( print ( rbLib.userPropClear sel #("NodeName") ) ) 
+
+		-- FN userPropCheck
 			-- clearListener()
 			-- timeStamp()
-			-- for sel in selArr do ( print ( rbLib.compareUserPropsWirecolor sel ))
+			-- selArr = selection as array 
+			-- for sel in selArr do ( print ( rbLib.userPropCheck sel "NodeName" ) ) 
+			-- for sel in selArr do ( print ( rbLib.userPropCheck sel "NodeName123" ) )  -- intentionalFail
+
+		-- FN userPropClearAll
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = selection as array 
+			-- for sel in selArr do ( print ( rbLib.userPropClearAll sel ) ) 
+
+	-- specific user props start ---	
+		-- Asset Name --	
+			-- FN collectNodeName
+			-- FN setUserPropsNodeName
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- for sel in selArr do ( print ( rbLib.setUserPropsNodeName sel ) ) 
+	
+			-- FN getUserPropsNodeName
+			-- FN compareUserPropsNodeName
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- for sel in selArr do ( print ( rbLib.compareUserPropsNodeName sel ) ) 
+	
+			-- FN compareUserPropsNodeName
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- for sel in selArr do ( print ( rbLib.restoreUserPropsNodeName sel ) ) 
+	
+		-- Asset Date --
+			-- FN collectNodeDate
+				-- clearListener()
+				-- timeStamp()
+				-- rbLib.collectNodeDate()
+	
+			-- FN setUserPropsNodeDate
+				-- clearListener()
+				-- timeStamp()
+				-- for sel in selArr do ( print ( rbLib.setUserPropsNodeDate sel ) ) 
+	
+		-- Rig Parent --
+	
+			-- FN collectRigParent
+			-- FN setUserPropsRigParent	
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- print ( "-- setUserPropsRigParent -- ")
+				-- for sel in selArr do ( print ( rbLib.setUserPropsRigParent sel ) ) 
+	
+			-- FN getUserPropsRigParent
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- print ( "-- getUserPropsRigParent -- ")
+				-- for sel in selArr do ( print ( rbLib.getUserPropsRigParent sel ) ) 
+	
+			-- FN getUserPropsRigParent
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- print ( "-- restoreUserPropsRigParent -- ")
+				-- for sel in selArr do ( rbLib.restoreUserPropsRigParent sel )
+	
+			-- FN compareUserPropsRigParent
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- print ( "-- compareUserPropsRigParent -- ")
+				-- for sel in selArr do ( print ( rbLib.compareUserPropsRigParent sel ) )
+	
+		-- Wirecolor --
+	
+			-- FN collectWirecolor
+			-- FN setUserPropsWirecolor	
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- print ( "-- collectWirecolor -- ")
+				-- for sel in selArr do ( print ( rbLib.collectWirecolor  sel ) ) 
+				-- print ( "-- collectWirecolor -- ")
+				-- for sel in selArr do ( rbLib.setUserPropsWirecolor sel ) 
+		
+			-- FN restoreUserPropsWirecolor
+				-- clearListener()
+				-- timeStamp()
+				-- selArr = selection as array 
+				-- print ( "-- restoreUserPropsWirecolor -- ")
+				-- for sel in selArr do ( rbLib.restoreUserPropsWirecolor sel )
+		
+			-- FN compareUserPropsWirecolor
+				-- clearListener()
+				-- timeStamp()
+				-- for sel in selArr do ( print ( rbLib.compareUserPropsWirecolor sel ))
+	

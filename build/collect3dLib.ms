@@ -7,6 +7,51 @@ function collect3dLibInit  = (
 	(
 		version = "0.0.1",
 
+		-- Completed 2023/01/26
+		-- Takes a list, and returns a list of all top level ( world space ) objects that are parents of the list
+		-- For use finding all the global or top level nodes of a list.
+		function collectProtoplasts arg_list = 
+		(
+			topLevelNodes = #()
+			
+			-- Subroutine for crawling up a heirarchy of a node, bounded by the number of iterations.
+			function boundedParentCrawl arg_node arg_iterations =
+			(
+				curNode = arg_node
+
+				-- Recursivly attempt to retrieve objects parent
+				for i in 1 to arg_iterations do 
+				(
+					newNode = curNode.parent 
+
+					-- Return the node, if it has no parent, otherwise reassign the current node and try again
+					if newNode == undefined
+					then 
+					(
+						-- Return the node that has no parents
+						return curNode 
+					)
+					else 
+					(
+						-- Reassign node and try again
+						curNode = newNode
+					)
+				)
+			)
+
+			-- Loop through all objects in the list and collect their parents
+			for obj in arg_list do 
+			(
+				topLevelNode = ( boundedParentCrawl obj 50 )
+
+				append topLevelNodes topLevelNode
+			)
+
+			topLevelNodes = ( makeUniqueArray topLevelNodes )
+
+			return topLevelNodes
+		),
+
 		-- Completed 2023/01/10
 		-- collects all of the children of an inital object, return parent as part of the array optional.
 		function collectAllChildren arg_node includeParent:true =
@@ -174,6 +219,10 @@ collect3dLib = collect3dLibInit()
 ----------------------
 -- Regression Tests --
 ----------------------
+
+	-- FN collectProtoplast
+		-- clearListener()
+		-- result = collect3dLib.collectProtoplasts selection
 
 	-- FN collectAllChildren
 		-- clearListener()
