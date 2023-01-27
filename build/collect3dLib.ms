@@ -36,13 +36,17 @@ function collect3dLibInit  = (
 						-- Reassign node and try again
 						curNode = newNode
 					)
+
+					-- Toss out a messagebox if the crawl reaches its maximum
+					if i == arg_iterations then 
+					( messagebox " Maximum number of heirarchy layers reached: " + ( arg_iterations as string ) )
 				)
 			)
 
 			-- Loop through all objects in the list and collect their parents
 			for obj in arg_list do 
 			(
-				topLevelNode = ( boundedParentCrawl obj 50 )
+				topLevelNode = ( boundedParentCrawl obj 100 )
 
 				append topLevelNodes topLevelNode
 			)

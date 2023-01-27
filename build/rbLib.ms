@@ -127,9 +127,7 @@ function rbLibInit  = (
 
 		),
 
---------------------------------------
 --- Rigging / Transforms Functions ---
---------------------------------------
 
 		-- Ready for test 2023/01/10
 		-- returns the position planar to the 3 passed objects, that is aligned to the hypotenuse of the second object. ( usefull for placing pole vectors )
@@ -164,40 +162,95 @@ function rbLibInit  = (
 			return newReport
 		),
 
+
+		function meshScaleCorrect arg_List = (
+			-- Function meshScaleCorrect bod_List
+		),
+		
 		-- Ready for test 2023/01/10
-		-- Checks for objects not at a uniform 100% scale
+		-- Checks for objects not at a uniform 100% scale, returns report with arrays of all types
 		function checkForScaledTransforms arg_list =
 		(
 
 			struct report
 			(
-				pass 		= true,
-				failIds 	= #()
+				pass 				= true,
+				nonScaled 			= #(),	
+				uniformScaled 		= #(),
+				nonUniformScaled  	= #()
 			)
 
 			newReport 	= report()
 
 			for arg in arg_list do
 			(
-				if arg.scale != [1,1,1] then 
+
+				-- Why am I converting the properties to string? For some unknown reason, whem values are tested 
+				-- against as float values, even if they appear the same, return invalid results. I think this may
+				-- be due to double float precision, or rounding errors, or something like that. To get around 
+				-- the issue, I converted the values to string, and run the tests on those, which perform as expected.
+				scaleXstr = (arg.scale[1] as string)
+				scaleYstr = (arg.scale[2] as string)
+				scaleZstr = (arg.scale[3] as string)
+
+
+				if ( scaleXstr == "1.0" ) and ( scaleYstr == "1.0" ) and ( scaleZstr == "1.0" ) then 
+				(
+					print "nonScaled"
+					append newReport.nonScaled ( gethandlebyanim arg )
+				)
+				else
 				(
 					newReport.pass = false
-					append newReport.failIds ( gethandlebyanim arg )
+
+					if ( scaleXstr == scaleYstr ) and ( scaleXstr == scaleZstr ) then 
+					(
+						print "uniformScaled"
+						append newReport.uniformScaled ( gethandlebyanim arg )
+					)
+					
+					else 
+					(
+						print "nonUniformScaled"
+						append newReport.nonUniformScaled ( gethandlebyanim arg )
+					)
 				)
 			)
 
 			-- Returns a report with pass/fail, and a list of all nodes that failed, if any
-			return newReport()
+			return newReport
 		),
 
-		function meshScaleCorrect arg_List = (
-			-- Function meshScaleCorrect bod_List
-		),
-
-		-- reparents all selected objects to the global
-		function driversBreakToWorld =
+		-- Completed 2023/01/18
+		-- reparents all selected objects to their global, or top level parent
+		function parentNodesToProtoplast arg_list =
 		(
-			print "driversBreakToWorld Function"
+			parentActions = #()
+
+			struct heirarchyOperationStr 
+			(
+				node = undefined,
+				parentNode = undefined
+			)
+
+			-- Set up actions
+			for node in arg_list do 
+			(
+				ho = heirarchyOperationStr()
+				pp = collect3dLib.collectProtoplasts #(node) -- collectProtoplasts runs on lists
+
+				ho.node = node
+				ho.parentNode = pp
+
+				append parentActions ho 
+			)
+
+			-- Perform actions
+			for action in parentActions do 
+			(
+				-- Do the parent 
+				action.node.parent = action.parentNode[1]
+			)
 		),
 
 --- Name Functions ---
@@ -248,59 +301,92 @@ function rbLibInit  = (
 			return newReport 
 		),
 
-		-- Ready for test 2023/01/10
+		-- Completed 2023/01/18
+		-- Requres namesMakeValidPrefixesCollect to be executed first
+		-- Applies the naming actions to the nodes prepared in the collect
+		function namesMakeValidPrefixes arg_ppData = 
+		(
+
+			for failId in arg_ppData.failNamesIds do 
+			(
+				curNode = getAnimByHandle failId
+				curNode.name = ( arg_ppData.nameTag + curNode.name )
+			)
+		),
+
+		-- Completed 2023/01/27
 		-- Verifies all children of the selected object have the same starting name / asset tag.
-		function namesValidChildPrefixes arg_list = 
+		-- Returns a useful list called protoplastsData. This list contains all objects, the desired name tag, and any items that do not match
+		function namesMakeValidPrefixesCollect arg_list = 
 		(
 
 			struct report
 			(
 				pass 			= true,
-				nameTag 		= "",
+				-- nameTag 		= "",
+				protoplasts 	= #(),
+				protoplastsData = #()
+			)
+
+			struct protoplastDataStruct
+			(
+				pass 			= undefined,
+				protoplast 		= undefined,
+				masterName 		= undefined,
+				nameTag 		= undefined,
+				allChildren 	= #(),
 				failNamesIds 	= #()
 			)
 
 			newReport 	= report()
 
 
-			-- TODO: Rework with the collect3dLib.collectProtoplasts and collect3dLib.collectAllChildren functions to operate on
 			-- Seperate heirarchies at the same time.
+			protoplasts 			= collect3dLib.collectProtoplasts arg_list
+			newReport.protoplasts 	= protoplasts
 
-			if arg_node.count == 1 then 
+			-- Collect and prepare all the children and names, and test children for incorrect names, and add them to failNamesIds
+			for protoplast in protoplasts do 
 			(
-				-- Get and store the name tag for the asset
-				masterName = arg_node.name
-				masterNameParts = FilterString masterName "_"
-				-- Builds a name tag, based off of the object, should look something like "C_TGD_"
-				newReport.nameTag = (masterNameParts[1] + "_" + masterNameParts[2] + "_" )
-			)
-			else
-			(
-				-- fail the report
-				messagebox ( "Select exactly 1 object")
-				newReport.pass = false
-			)
 
-			if newReport.pass == true then 
-			(
-				objArr = collect3dLib.collectAllChildren arg_node includeParent:true
+				ppData 				= protoplastDataStruct()
+				ppData.protoplast 	= protoplast
 
-				for curObj in objArr do 
+				-- Get and store all the children of the protoplast
+				ppData.allChildren 	= collect3dLib.collectAllChildren protoplast includeParent:false
+
+				-- Get and store the masterName for the asset
+				ppData.masterName 	= protoplast.name
+				masterNameParts 	= ( FilterString ppData.masterName "_" )
+
+				-- If the mastername does not have any delimiters in it, a name tag cannot be generated, so pass result as a false
+				if masterNameParts.count == 1 then 
 				(
-					curSubString = ( substring curObj.name 1 newReport.nameTag.count )
+					ppData.pass = false 
+				)
+				else
+				(
+					ppData.pass = true 
 
-					if curSubString != newReport.nameTag then 
+					-- Builds a name tag, based off of the object, should look something like "C_TGD_"
+					ppData.nameTag 		= ( masterNameParts[1] + "_" + masterNameParts[2] + "_" )
+	
+					-- Collect child names that do not start with the tag
+					for child in ppData.allChildren do 
 					(
-						curHandle = (getHandleByAnim curObj )
-						append newReport.failNamesIds curHandle
+						childPrefix = (substring child.name 1 ppData.nameTag.count )
+						--print childPrefix
 
-						newReport.pass = false
+						if childPrefix != ppData.nameTag then 
+						(
+							append ppData.failNamesIds ( getHandleByAnim child )
+						)
 					)
-					else()
+	
+					-- Store the ppData in the main report
+					append newReport.protoplastsData ppData
 				)
 			)
-
-			newReport.failNamesIds = makeUniqueArray newReport.failNamesIds
 
 			-- Returns a report with pass/fail, the desired name and a list of all nodes that failed, if any
 			return newReport 
@@ -862,12 +948,44 @@ rbLib = rbLibInit()
 rbLib.version
 
 
-
 ----------------------
 -- Regression Tests --
 ----------------------
 
-	--- Name Functions ---
+	-- Rigging / Transforms Functions --
+
+		-- FN checkForScaledTransforms
+			clearListener()
+			print ( timeStamp() )
+			selArr = selection as array 
+			result = rbLib.checkForScaledTransforms selArr
+			print result
+
+			-- Select them
+			-- select ( collect3dLib.collectByAnimhandle result.nonUniformScaled )
+
+
+	
+	-- Name Functions --
+
+		-- FN parentNodesToProtoplast
+			-- clearListener()
+			-- print ( timeStamp() )
+			-- selArr = selection as array 
+			-- rbLib.parentNodesToProtoplast selArr
+
+		-- FN namesMakeValidPrefixes
+			-- clearListener()
+			-- print ( timeStamp() )
+			-- result = ( rbLib.namesMakeValidPrefixesCollect ( selection as array ) )
+			-- -- !! Requires a collect before execution
+			-- for ppData in result.protoplastsData do ( rbLib.namesMakeValidPrefixes ppData )
+
+		-- FN namesMakeValidPrefixesCollect
+			-- clearListener()
+			-- print ( timeStamp() )
+			-- result = ( rbLib.namesMakeValidPrefixesCollect ( selection as array ) )
+			-- print result.protoplastsData[1].failNamesIds
 
 		-- FN namesCheckForDuplicates
 			-- clearListener()
