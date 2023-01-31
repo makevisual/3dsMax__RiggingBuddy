@@ -28,7 +28,8 @@ function math3dLibInit  = (
 		),
 
 		-- Completed 2023/01/10
-		-- returns the point planar to the 3 passed objects, that is aligned to the hypotenuse of the second object. ( usefull for placing pole vectors )
+		-- returns the point planar to the 3 passed objects, that is aligned to the hypotenuse of the second object.
+		-- Intended us for for placing pole vector nodes
 		function hypotenuseAlign arg_objs =
 		(
 			
@@ -48,6 +49,21 @@ function math3dLibInit  = (
 		 	return newPos
 		),
 
+		-- Completed 2023/01/30
+		-- Returns true / false if two float values are within the epsilon value of eachother.
+		-- Good for preventing errors with floating point comparisons.
+		function withinEpsilon arg_a arg_b arg_eps = 
+		(
+		    if ( abs(arg_a - arg_b)) <= arg_eps then
+		    (
+		        return true
+		    )
+		    else
+		    (
+		        return false
+			)
+		),
+
 		ender = undefined
 	)	
 
@@ -62,6 +78,10 @@ math3dLib = math3dLibInit()
 ----------------------
 -- Regression Tests --
 ----------------------
+	
+	-- FN withinEpsilon
+		-- clearListener() 
+		-- math3dLib.withinEpsilon 1.00000 .99999 .001
 
 	-- FN distance3D
 	-- FN bisect3D

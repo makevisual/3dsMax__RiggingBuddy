@@ -4,9 +4,6 @@ filein "userPropLib.ms" 	-- used for common user property operations -- comes in
 filein "strLib.ms" 			-- used for common string operations 		-- comes in as strLib
 
 
--- ToDo: test skin pose set
-
-
 function rbLibInit  = (
 	
 	struct rbLibStruct
@@ -42,34 +39,193 @@ function rbLibInit  = (
 		-- Functionally collapses a skin modifier and replaces it, to make sure bind pose deformations are clean and correct
 		function skinDeformReset arg_list =
 		(
-			print "skinDeformReset Function"
+			for node in arg_list do 
+			(
+
+				
+
+			)
 		),
-		
+
+		-- Completed 2023/01/31		
 		-- Checks if there is a skin modifier on the current selection
 		function skinCheck arg_list =
 		(
-			print"skinCheckOnSelection Function"
+			struct report
+			(
+				pass 	= true,
+				noSkin 	= #()
+			)
+
+			newReport 	= report()
+
+			-- Collect all the nodes with a skin modifier on them, filtered by an optional list
+
+			-- Collect only geometryclass objects
+			meshes = collect3dLib.collectByClass arg_list GeometryClass inclusive:true
+			-- Remove boneGeometry from the list
+			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
+
+			for node in meshes do 
+			(
+				hasSkin = false
+
+				for modifier in node.modifiers do 
+				(
+
+					if ( ( classof modifier ) == Skin ) then ( hasSkin = true )
+
+					-- print ( classof modifier )
+					-- print "Skin Found"
+				)
+
+				if ( hasSkin == false ) then
+				(
+					-- print "No Skin Found"
+					append newReport.noskin ( gethandlebyanim node )
+					newReport.pass = false
+				)
+			)
+
+			return newReport
 		),
 
-		-- Checks if there are any topology changing modifiers below the current skin modifier
+		-- Completed 2023/01/31
+		-- Checks if there are any topology changing modifiers below the skin modifier
 		function skinCheckSafeMods arg_list =
 		(
-			print"skinCheckSafeModsBelow Function"
+			struct report
+			(
+				pass 						= true,
+				fail_turbosmooth			= #(),
+				fail_meshsmooth  			= #(),
+				fail_OpenSubdiv	 			= #(), 
+				fail_subdivide 	 			= #(),
+				fail_Shell 					= #(),
+				fail_RetopologyComponent 	= #(),
+				fail_ProOptimizer 			= #(),
+				fail_optimize 				= #(),
+				fail_Vertex_Weld 			= #()
+			)
+
+			newReport 	= report()
+
+			-- Collect all the nodes with a skin modifier on them, filtered by an optional list
+			nodesWithSkin = collect3dLib.collectNodesByModifier Skin arg_list
+
+			-- Loop through all the collected nodes.
+			for node in nodesWithSkin do 
+			(
+				-- reset the skin found flag for each node
+				skinModFound = false 
+
+				-- convert nodesWithSkin from animhandles to 3dsMax nodes
+				nodeAsAnim = ( getanimbyhandle node )
+
+				-- loop through all the modifiers on each nodeAsAnim
+				for modifier in nodeAsAnim.modifiers do 
+				(
+					-- retrieve its class
+					curModClass = classof modifier
+
+					-- If the skin modifier has been found, test for each of the invalid modifiers
+					if skinModFound then 
+					(
+						if curModClass == TurboSmooth 			then ( append newReport.fail_turbosmooth node 			; newReport.pass = false )
+						if curModClass == meshsmooth 			then ( append newReport.fail_meshsmooth node 			; newReport.pass = false )
+						if curModClass == OpenSubdiv 			then ( append newReport.fail_OpenSubdiv node 			; newReport.pass = false )
+						if curModClass == subdivide 			then ( append newReport.fail_subdivide node 			; newReport.pass = false )
+						if curModClass == Shell 				then ( append newReport.fail_Shell node 				; newReport.pass = false )
+						if curModClass == RetopologyComponent 	then ( append newReport.fail_RetopologyComponent node 	; newReport.pass = false )
+						if curModClass == ProOptimizer 			then ( append newReport.fail_ProOptimizer node 			; newReport.pass = false )
+						if curModClass == optimize 				then ( append newReport.fail_optimize node 				; newReport.pass = false )
+						if curModClass == Vertex_Weld 			then ( append newReport.fail_Vertex_Weld node 			; newReport.pass = false )
+					)					
+
+					-- Check if the skin modifier has been reached in the stack, if it has, set the flag to true
+					-- Doing this last, to avoid unnecessary tests
+					if ( curModClass == Skin ) then (skinModFound = true)
+				)
+			)
+
+			return newReport
 		),
 
-		-- Adds a skin modifier to the object with 100% weighting to the selected object
-		function skinParent arg_list = 
-		(
-			print"skinParent Function"
-		),
-
+		-- Completed 2023/01/31
 		-- Adds a skin modifier to the object with 100% weighting to the objects parent
-		function skinParentConvert arg_list = 
+		-- arg_parent - Either a node or undefined, to use current objects parent.
+		function skinParent arg_list arg_parent = 
 		(
-			print"skinParentConvert Function"
+			struct report
+			(
+				pass 		= true,
+				orphanIds 	= #()
+			)
+
+			newReport 	= report()
+
+			-- Collect only geometryclass objects
+			meshes = collect3dLib.collectByClass arg_list GeometryClass inclusive:true
+			-- Remove boneGeometry from the list
+			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
+
+			-- Disable the 3dsMax from updating in windows
+			WM_SETREDRAW 	= 11
+			MAX_HWND 		= windows.getMaxHWND()
+			windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
+
+			-- Store selections, and command panel mode
+			sel 	= selection as array
+			mode 	= getCommandPanelTaskMode()
+
+			-- Go through each of the collected meshes
+			for mesh in meshes do 
+			(
+				curParent = undefined
+
+				-- Case for no passed argument for the parent 
+				if (arg_parent == undefined ) then 
+				(
+					curParent = mesh.parent
+				)
+				-- Case for passed argument for the parent
+				else 
+				(
+					curParent = arg_parent
+				)
+
+				-- If it has a parent
+				if ( curParent != undefined ) then 
+				(
+					-- Add a skin modifier, and skin it
+					newSkin = Skin()
+
+					addModifier mesh newSkin
+					modPanel.setCurrentObject mesh.baseObject
+					modPanel.setCurrentObject mesh.modifiers[#Skin]
+					skinOps.addBone mesh.modifiers[#Skin] curParent 1
+					mesh.modifiers[#Skin].cross_radius = 1
+				)
+				else
+				(
+					-- Otherwise signal not all objects were skinned
+					newReport.pass = false
+					append newReport.orphanIds ( getHandleByAnim mesh )
+				)
+
+			-- Restore the selection, command panel to previous state
+			if sel.count then select sel else clearselection()
+			setCommandPanelTaskMode mode:mode
+
+			-- Enable 3dsMax to update in windows
+			windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+
+			)
+			-- Returns any mesh objects that were not skinned
+			return newReport
 		),
 
-		-- Ready for test 2023/01/10
+		-- Completed 2023/01/31
 		-- Sets the pivot of any meshes to the origin, underneath a skin, with its properties set to "always deform off"
 		function skinPivotReset arg_list =
 		(
@@ -82,34 +238,44 @@ function rbLibInit  = (
 
 			newReport 	= report()
 
+			-- For each item in the list
 			for arg in arg_list do
 			(
 				try
 				(
-
+					-- If the objects pivot does not = the origin, then
 					if arg.pivot != [0,0,0] then 
 					(
 						mods = arg.modifiers
 						test = false
 						
+						-- Look through each of the modifiers
 						for j in 1 to mods.count do
 						(	
+							-- If the modifier is a skin modifier
 							if (classof mods[j]) == skin 
 							then
 							(
+								-- Turn the modifier off, disable always deform
 								mods[j].enabled = false 
-								modPanel.setCurrentObject mods[j]
-								
 								mods[j].always_deform = false
+
+								-- Reset the pivot
 								arg.pivot = [0,0,0]
+
+								-- Turn things back on
 								mods[j].always_deform = true
-								
+								mods[j].enabled = true
+
+								-- Indicate that the pivot was modified
 								test = true
 							)
 						)
 						
+						-- If all modifiers were looped through, and the pivot was not moved, move it.
 						if test == false then arg.pivot = [0,0,0]
 
+						-- Add the information to the report
 						append newReport.editedIds ( getHandleByAnim arg )
 					)
 
@@ -122,14 +288,97 @@ function rbLibInit  = (
 			return newReport
 		),
 
-		function skinwrapStealWeights arg_Node arg_List =
+		-- Completed 2023/01/31
+		-- Adds a skin wrap, and then adds meshes, then converts to skin
+		function skinwrapStealWeights arg_node arg_list =
 		(
+			-- Setup and add the modifier
+			newSkin_Wrap = Skin_Wrap()
+			newSkin_Wrap.engine = 0
+			newSkin_Wrap.weightAllVerts = true
+			newSkin_Wrap.meshList = arg_list
+			addModifier arg_node newSkin_Wrap
 
+			-- Disable the 3dsMax from updating in windows
+			WM_SETREDRAW 	= 11
+			MAX_HWND 		= windows.getMaxHWND()
+			windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
+
+			-- Store selections, and command panel mode
+			sel 	= selection as array
+			mode 	= getCommandPanelTaskMode()
+
+			-- Set command panel to Modify mode, and select the skinwrap, then convert it to skin
+			setCommandPanelTaskMode mode:#modify
+			modPanel.setCurrentObject arg_node.skin_wrap
+			arg_node.skin_wrap.ConvertToSkin on
+
+			-- Get rid of the old skinwrap
+			deleteModifier arg_node newSkin_Wrap
+
+			-- Restore the selection, command panel to previous state
+			if sel.count then select sel else clearselection()
+			setCommandPanelTaskMode mode:mode
+
+			-- Enable 3dsMax to update in windows
+			windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+		),
+
+--- Mesh Functions ---
+
+		-- Completed 2023/01/10
+		-- Totally resets all the properties of a mesh, by creating a new 1 polygon mesh, attaching the original mesh to it, and then deleting the single polygon.
+		-- Good for getting rid of anything and everything on a mesh, and making it clean as possible.
+		-- function will preserve wirecolor, name, and parent.
+		function meshCollapseAndReset arg_list =
+		(
+			-- Collect only geometryclass objects
+			meshes = collect3dLib.collectByClass arg_list GeometryClass inclusive:true
+			-- Remove boneGeometry from the list
+			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
+			newMeshes = #()
+
+			for mesh in meshes do 
+			(
+				-- Store some properties to restore later
+				holdWire 	= mesh.wirecolor
+				holdName 	= mesh.name
+				holdParent 	= mesh.parent
+
+				-- Create a new plane to serve as donor object
+				newPlane = plane()
+				newPlane.widthsegs = 1
+				newPlane.lengthsegs = 1
+
+				-- Convert both meshes into editpolys 
+				polyMesh1 = ( ConvertToPoly newPlane )
+				polyMesh2 = ( ConvertToPoly mesh )
+
+				-- Attach the src object to the donor object
+				polyop.attach polyMesh1 polyMesh2
+				
+				-- Remove the single poloygon from the donor object
+				newEdit_Poly = Edit_Poly()
+				addmodifier polyMesh1 newEdit_Poly
+				polyop.deletefaces polyMesh1 #{1}
+				polyMesh1 = ( ConvertToPoly polyMesh1 )
+
+				-- Restore previously stored properties
+				polyMesh1.wirecolor = holdWire 	
+				polyMesh1.name = holdName 	
+				polyMesh1.parent = holdParent 	
+
+
+				-- Add the new mesh to the list of new meshes
+				append newMeshes polyMesh1
+			)
+
+			return newMeshes
 		),
 
 --- Rigging / Transforms Functions ---
 
-		-- Ready for test 2023/01/10
+		-- Completed 2023/01/30
 		-- returns the position planar to the 3 passed objects, that is aligned to the hypotenuse of the second object. ( usefull for placing pole vectors )
 		function hypotenusePoint arg_list =
 		(
@@ -139,7 +388,7 @@ function rbLibInit  = (
 			struct report
 			(
 				pass 		= true,
-				curObjects 	= arg_list,
+				curObjects 	= undefined,
 				hypotPoint 	= undefined
 			)
 
@@ -162,13 +411,8 @@ function rbLibInit  = (
 			return newReport
 		),
 
-
-		function meshScaleCorrect arg_List = (
-			-- Function meshScaleCorrect bod_List
-		),
-		
-		-- Ready for test 2023/01/10
-		-- Checks for objects not at a uniform 100% scale, returns report with arrays of all types
+		-- Completed 2023/01/30
+		-- Checks for objects not at a uniform 100% scale, returns report with arrays of all types of scaling
 		function checkForScaledTransforms arg_list =
 		(
 
@@ -182,36 +426,29 @@ function rbLibInit  = (
 
 			newReport 	= report()
 
+			-- Loop through all the objects
 			for arg in arg_list do
 			(
+				-- Floating point error that is acceptable to be within.
+				epsilon = 0.001
 
-				-- Why am I converting the properties to string? For some unknown reason, whem values are tested 
-				-- against as float values, even if they appear the same, return invalid results. I think this may
-				-- be due to double float precision, or rounding errors, or something like that. To get around 
-				-- the issue, I converted the values to string, and run the tests on those, which perform as expected.
-				scaleXstr = (arg.scale[1] as string)
-				scaleYstr = (arg.scale[2] as string)
-				scaleZstr = (arg.scale[3] as string)
-
-
-				if ( scaleXstr == "1.0" ) and ( scaleYstr == "1.0" ) and ( scaleZstr == "1.0" ) then 
+				-- True condition for if all scale dimensions are equal to 1, within error
+				if ( math3dLib.withinEpsilon arg.scale[1] 1.0000 epsilon ) and ( math3dLib.withinEpsilon arg.scale[2] 1.0000 epsilon ) and ( math3dLib.withinEpsilon arg.scale[3] 1.0000 epsilon ) then 
 				(
-					print "nonScaled"
 					append newReport.nonScaled ( gethandlebyanim arg )
 				)
 				else
 				(
 					newReport.pass = false
 
-					if ( scaleXstr == scaleYstr ) and ( scaleXstr == scaleZstr ) then 
+					-- True condition for if all scale dimensions are equal to eachother, within error
+					if ( math3dLib.withinEpsilon arg.scale[1] arg.scale[2] epsilon ) and ( math3dLib.withinEpsilon arg.scale[1] arg.scale[3] epsilon ) then 
 					(
-						print "uniformScaled"
 						append newReport.uniformScaled ( gethandlebyanim arg )
 					)
 					
 					else 
 					(
-						print "nonUniformScaled"
 						append newReport.nonUniformScaled ( gethandlebyanim arg )
 					)
 				)
@@ -911,7 +1148,7 @@ function rbLibInit  = (
 
 		-- Completed 2023/01/25
 		-- Compares and returns the values for the current and stored property
-		function compareUserPropsWirecolor arg_Node =
+		function compareUserPropsWirecolor arg_node =
 		(
 			struct report
 			(
@@ -952,19 +1189,66 @@ rbLib.version
 -- Regression Tests --
 ----------------------
 
+
+
+	-- Skin Functions --
+
+		-- FN skinCheck
+			clearListener()
+			timeStamp()
+			selArr = ( selection as array )
+			rbLib.skinCheck selArr			
+
+		-- FN skinCheckSafeMods
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = ( selection as array )
+			-- rbLib.skinCheckSafeMods selArr			
+
+		-- FN skinParentToSkin
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = ( selection as array )
+			-- -- rbLib.skinParent selArr undefined -- test for retriving a parent from the heirarchy
+			-- rbLib.skinParent selArr $Point001 -- test for passing a new parent
+
+		-- FN skinPivotReset
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = ( selection as array )
+			-- rbLib.skinPivotReset selArr
+
+		-- FN skinwrapStealWeights
+			-- clearListener()
+			-- timeStamp()
+			-- rbLib.skinwrapStealWeights selection[2] #(selection[1])
+
+	-- Mesh Functions --
+		-- FN meshCollapseAndReset
+			-- clearListener()
+			-- timestamp()
+			-- result = rbLib.meshCollapseAndReset ( selection as array )
+			-- select result
+
 	-- Rigging / Transforms Functions --
 
+		-- FN hypotenusePoint 
+			-- clearListener()
+			-- print ( timeStamp() )
+			-- rbLib.hypotenusePoint ( selection as array )
+
 		-- FN checkForScaledTransforms
-			clearListener()
-			print ( timeStamp() )
-			selArr = selection as array 
-			result = rbLib.checkForScaledTransforms selArr
-			print result
-
-			-- Select them
-			-- select ( collect3dLib.collectByAnimhandle result.nonUniformScaled )
-
-
+			-- clearListener()
+			-- print ( timeStamp() )
+			-- selArr = selection as array 
+			-- result = rbLib.checkForScaledTransforms selArr
+			--		
+			-- result2 = collect3dLib.collectByAnimhandle result.nonUniformScaled
+			--
+			-- print result
+			-- print result2
+			--
+			-- select result2
 	
 	-- Name Functions --
 

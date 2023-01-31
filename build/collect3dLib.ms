@@ -98,9 +98,71 @@ function collect3dLibInit  = (
 			return selList
 		),
 
-		-- Completed 2023/01/10
-		-- collects all items in the list, filtered by class
-		function collectByClass arg_list arg_Class =
+		-- Completed 2023/01/30
+		-- returns all nodes with a class of modifier on it, will filter results by any nodes in
+		-- the arg_list argument. 
+		function collectNodesByModifier arg_modifier arg_list =
+		(
+			-- setup arrays
+			nodesWithMod = #()
+			nodesListed  = #()
+			resultNodes  = #()
+
+			-- collect all the arg_modifier modifiers in the scene
+			modArr = ( getclassinstances arg_modifier )
+
+			-- get all the nodes with arg_modifier modifiers on them						
+			for m in modArr do
+			(
+				curNode 	= ( refs.dependentnodes m )
+				curHandle 	= ( getHandleByAnim curNode[1] )
+
+				append nodesWithMod curHandle
+			)
+
+			-- remove duplicates ( from instanced skins )
+			nodesWithMod = ( makeUniqueArray nodesWithMod )
+
+			-- if there are any items passed in the arg_list, then filter them against the previously collected nodes
+			if arg_list.count >= 1 then 
+			(
+				-- for each of the items in the passed list...
+				for listNode in arg_list do 
+				(
+					-- and each of the items in the nodes with the modifier...
+					for modNode in nodesWithMod do 
+					(
+						-- collect their animhandles
+						listHandle 	= ( getHandleByAnim listNode )
+						selHandle 	= modNode
+						--selHandle 	= ( getHandleByAnim modNode )
+
+						-- and compare them, adding the handle to the result list if they match.
+						if ( listHandle == selHandle ) then 
+						(
+							append resultNodes listHandle
+						)
+					)
+				)
+
+				-- remove duplicates ( from instanced skins )
+				resultNodes = ( makeUniqueArray resultNodes )
+
+			)
+			-- If there is no passed list of nodes to compare...
+			else 
+			(
+				-- assign all nodes with the modifier, to the result array
+				resultNodes = nodesWithMod
+			)
+
+			-- Return the result array
+			return resultNodes
+		),
+
+		-- Completed 2023/01/30
+		-- collects all items in the list, filtered by class, can be additive or subtractive
+		function collectByClass arg_list arg_Class inclusive:true=
 		(
 
 			-- change the command panel to create mode, for performance
@@ -112,18 +174,33 @@ function collect3dLibInit  = (
 			-- loop through the other objects in the array
 			for i in 1 to (arg_list.count) do
 			(
-				-- if the object is geometry class
-				if ( iskindof arg_list[i] arg_Class )
+				-- Case for including only the passed class
+				if inclusive then 
+				(
+					-- if the object is geometry class
+					if ( iskindof arg_list[i] arg_Class )
 
-				-- join it
-				then (join resultArr #(arg_list[i]))
-				else ()
+					-- join it
+					then (join resultArr #(arg_list[i]))
+					else ()
+				)
+
+				-- Case for removing the passed class
+				else
+				(
+					-- if the object is geometry class
+					if ( iskindof arg_list[i] arg_Class )
+
+					-- join it
+					then ()
+					else (join resultArr #(arg_list[i]))
+				)
 			)
 			
 			-- Returns a list of nodes that fit the criteria
 			return resultArr
 		),
-		
+
 		-- Completed 2023/01/10
 		-- Returns all top level scene nodes ( objects without parents )
 		function collectOrphanObjects = 
@@ -223,6 +300,11 @@ collect3dLib = collect3dLibInit()
 ----------------------
 -- Regression Tests --
 ----------------------
+
+	-- FN collectNodesByModifier
+		-- clearListener()
+		-- result = collect3dLib.collectNodesByModifier Skin ( selection as array )
+		-- print result
 
 	-- FN collectProtoplast
 		-- clearListener()
