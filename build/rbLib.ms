@@ -10,6 +10,16 @@ function rbLibInit  = (
 	(
 		version = "0.0.1",
 
+-----------------------------
+--- Boilerplate Functions ---
+-----------------------------
+		-- Returns the version number as a string
+		function verNumStr =
+		(
+			curVerNumStr = ( ( ( rigBuddy.version[1] as integer ) as string ) + "." + ( ( rigBuddy.version[2] as integer ) as string ) + "." + ( ( rigBuddy.version[3] as integer ) as string ) )
+			return curVerNumStr
+		),
+
 ----------------------------
 --- PointCache Functions ---
 ----------------------------
@@ -26,23 +36,42 @@ function rbLibInit  = (
 			print"pointCacheTestSelection Function"
 		),
 
-----------------------
---- Skin Functions ---
-----------------------
-
-		-- Converts all skin modifiers to point caches
+		-- Converts all skin modifiers to point caches - useful for making the render version of an asset.
 		function skinToPointCaches =
 		(
 			print "skinToPointCaches Function"
 		),
 
-		-- Functionally collapses a skin modifier and replaces it, to make sure bind pose deformations are clean and correct
+------------------------
+--- Baking Functions ---
+------------------------
+
+		-- Bake and save
+		function bakeAndSave args =
+		(
+
+		),
+		
+		-- Bake and save, but for bones.
+		function bakeAndSaveSkeleton args =
+		(
+
+		),
+
+----------------------
+--- Skin Functions ---
+----------------------
+
+		-- Functionally collapses a skin modifier and replaces it, to make sure bind pose deformations are clean and match the unmodified skin pose of the rig
 		function skinDeformReset arg_list =
 		(
-			for node in arg_list do 
-			(
+			-- Collect only geometryclass objects
+			meshes = collect3dLib.collectByClass arg_list GeometryClass inclusive:true
+			-- Remove boneGeometry from the list
+			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
 
-				
+			for node in meshes do 
+			(
 
 			)
 		),
@@ -1193,11 +1222,11 @@ rbLib.version
 
 	-- Skin Functions --
 
-		-- FN skinCheck
-			clearListener()
-			timeStamp()
-			selArr = ( selection as array )
-			rbLib.skinCheck selArr			
+		-- FN skinDeformReset
+			-- clearListener()
+			-- timeStamp()
+			-- selArr = ( selection as array )
+			-- rbLib.skinDeformReset selArr			
 
 		-- FN skinCheckSafeMods
 			-- clearListener()
