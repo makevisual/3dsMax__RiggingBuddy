@@ -12,6 +12,8 @@ struct rigBuddyStruct
 	interfaces 	= undefined,		-- interfacesLib.ms - ui items and their functions - instantiated here
 	uiItems 	= undefined,		-- as ui items are created, they are stored in a list here, for access later
 	uiMain 		= undefined,		-- main ui item stored on here
+	uiMainItems	= undefined,		-- holds the ui items to be worked with
+	uiAbout 	= undefined,		-- main ui item stored on here
 	lib 		= undefined,		-- rbLib.ms, and sublibraries - all working functions - instantiated here
 	data 		= undefined 		-- global data location
 )
@@ -29,7 +31,7 @@ rigBuddy.lib 			= rbLibInit() 						-- assigns the functions structs from rbLib.
 -- Initialize Interfaces
 filein "interfacesLib.ms" 
 rigBuddy.interfaces 	= rbInterfacesStruct()				-- assigns the interfaces structs from rbInterfacesLib.ms
-rigBuddy.uiMain 		= rigBuddy.interfaces.uiMainInit() 	-- Builds the main ui, and assigns it
+rigBuddy.uiMain 		= rigBuddy.interfaces.uiMainInit()	-- Builds the main ui, and assigns it
 
 -- Add the main ui into the ui list, for bookkeeping 
 append rigBuddy.uiItems rigBuddy.uiMain
