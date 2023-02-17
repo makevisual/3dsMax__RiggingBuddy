@@ -72,7 +72,7 @@ struct rbInterfacesStruct
 		if arg_mode == "User Properties" then
 		(
 			for item in rbuimi.uiUserProperties 	do ( try( item.visible = true )catch() )
-			rigBuddy.uiMain.height = 200
+			rigBuddy.uiMain.height = 300
 		)
 
 	),
@@ -132,7 +132,7 @@ struct rbInterfacesStruct
 		curVerNumStr = rigBuddy.lib.verNumStr()
 		rollout uiMainRollout ( "MAKE Rig Buddy v" + curVerNumStr ) width:1000 height:10
 		(
-			dotNetControl 	lvMain 						"system.windows.forms.listView" pos:[420,0] height:200 width:619					
+			dotNetControl 	lvMain 						"system.windows.forms.listView" pos:[420,0] height:200 width:575					
 			label 			labelStatus					"Status: initializing"			pos:[0,0]	align:#left	
 			progressbar 	progBar1 					width:990 						pos:[0,0] 	height:8 value:80 color:[0,60,90]
 
@@ -140,56 +140,102 @@ struct rbInterfacesStruct
 				button 			btnBakeAndSave 			"Bake and Save" 				align:#left
 
 			label 			labMeshes					"Mesh Tools"						pos:[10,10]	align:#left
-			label 			labSkinning					"Skinning Tools"					pos:[10,10]	align:#left	
 			label 			labRigging					"Rigging Tools"						pos:[10,10]	align:#left	
+			label 			labSkinning					"Skinning Tools"					pos:[10,10]	align:#left	
+
+				-- button 			btn
 
 			label 			labNaming					"Naming Tools"						pos:[10,10]	align:#left	
+
 				button 			btnNameDupeCheck 		"Check selection for duplicate names "						pos:[10,30]	 	align:#left	width:300
 				button 			btnNameDupeSelect 		"Select "													pos:[310,30] 	align:#left	width:100 enabled:false
+
 				button 			btnNameAutoCheck 		"Preview Auto Generated Unique name on selection "			pos:[10,60] 	align:#left	width:300 
 				button 			btnNameAutoApply 		"Apply "													pos:[310,60] 	align:#left	width:100 enabled:false
+
 				button 			btnNamePrefixCheck 		"Check hierarchy prefix tags against Global "				pos:[10,90]		align:#left	width:300
 				button 			btnNamePrefixSelect 	"Select "													pos:[310,90] 	align:#left	width:100 enabled:false
 				button 			btnNamePrefixApply 		"Apply "													pos:[310,112] 	align:#left	width:100 enabled:false
 
 				button  		btnNameUPCheck 			"Check selection for stored name" 							pos:[10,140] align:#left	width:400
-				button  		btnNameUPGet 			"Reset stored name" 										pos:[10,162] align:#left	width:200
+				button  		btnNameUPGet 			"Fetch stored name" 										pos:[10,162] align:#left	width:200
 				button  		btnNameUPSet 			"Store current name" 										pos:[210,162] align:#left	width:200
 
+			label 			labUserProps		"User Property Tools"				pos:[10,10]	align:#left
 
-			label 			labUserProps		"User Property Tools"				pos:[10,10]	align:#left	
+				button  		btnUserPropsGetAll 			"Fetch all" 											pos:[10,30] align:#left		width:132
+				button  		btnUserPropsSetAll 			"Store all" 											pos:[145,30] align:#left	width:132
+				button  		btnUserPropsClearAll 		"Clear all" 											pos:[280,30] align:#left	width:132
 
-			function fnnNameUPCheck = 
+				button  		btnUserPropsNameCheck 		"Check selections stored name" 							pos:[10,60] align:#left		width:400
+				button  		btnUserPropsNameGet 		"Fetch stored name" 									pos:[10,82] align:#left		width:132
+				button  		btnUserPropsNameSet 		"Store current name" 									pos:[210,82] align:#left	width:132
+
+				button  		btnUserPropsParentCheck 	"Check selections stored parent" 						pos:[10,110] align:#left	width:400
+				button  		btnUserPropsParentGet 		"Restore parent" 										pos:[10,132] align:#left	width:132
+				button  		btnUserPropsParentSet 		"Store parent" 											pos:[210,132] align:#left	width:132
+
+				button  		btnUserPropsWirecolorCheck 	"Check selections stored wirecolor" 					pos:[10,160] align:#left	width:400
+				button  		btnUserPropsWirecolorGet 	"Restore wirecolor" 									pos:[10,182] align:#left	width:132
+				button  		btnUserPropsWirecolorSet 	"Store wirecolor" 										pos:[210,182] align:#left	width:132
+
+				button  		btnUserPropsDateGet 		"Check publish date" 									pos:[10,212] align:#left	width:132
+				button  		btnUserPropsDateSet 		"Store current date" 									pos:[210,212] align:#left	width:132
+
+			function fnNameUPCheck = 
 			(
-				struct report
-				(
-					animhandle 		= undefined,
-					match 			= undefined,
-					currentName 	= undefined,
-					storedName 		= undefined,
-				)
-
 				reports = #()
 				selarr 	= selection as array 
 
+				-- For each item in selection, examine it
 				for sel in selarr do 
 				(
-					newReport 	= report()
-
-					--TODO: do the comparison, store it, and return. this should probably move to rblib.ms
-					fetchName = (rigBuddy.lib.getUserPropsNodeName sel)
-
-					newReport.animhandle 	= ( getHandleByAnim sel )
-					newReport.currentName 	= (sel.name)
-					newReport.storedName 	= (fetchName)
-					newReport.match 		= ()		
-
+					newReport = rigBuddy.lib.compareUserPropsNodeName sel
 					append reports newReport
-
 				)
 
 				rbi = rigBuddy.interfaces
-				rbi.lvSetColumns	lvMain #("","Animhandle","Current Name","New Name") #(22,80,240,240)	
+				rbi.lvSetColumns	lvMain #("","Match","Current Name","Stored Name") #(22,60,250,250)	
+				rows = #()
+
+				for report in reports do 
+				(
+					-- Make a new List view Item
+					li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+					li.UseItemStyleForSubItems = false					
+					li.subitems.add ( report.pass as string )
+					li.subitems.add ( report.currentVal )
+					li.subitems.add ( report.storedVal )
+
+					append rows li
+				)
+
+				-- Add the rows
+				lvMain.items.addRange rows
+
+				rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " names compared")
+			)
+
+			function fnNameUPSet =
+			(
+				selArr = (selection as array)
+				for sel in selArr do
+				(
+					rigBuddy.lib.setUserPropsNodeName sel
+				)
+
+				rigBuddy.uiMain.labelStatus.text = ( ( selArr.count as string ) + " names stored")
+			)
+
+			function fnNameUPGet =
+			(
+				selArr = (selection as array)
+				for sel in selArr do
+				(
+					rigBuddy.lib.restoreUserPropsNodeName sel
+				)
+
+				rigBuddy.uiMain.labelStatus.text = ( ( selArr.count as string ) + " names fetched")
 			)
 
 			function fnNameAutoCheck = 
@@ -417,9 +463,25 @@ struct rbInterfacesStruct
 				append curLi btnNamePrefixCheck 
 				append curLi btnNamePrefixSelect
 				append curLi btnNamePrefixApply 
+				append curLi btnNameUPCheck
+				append curLi btnNameUPGet
+				append curLi btnNameUPSet
 
 				curLi = rigBuddy.uiMainItems.uiUserProperties
 				append curLi labUserProps
+				append curLi btnUserPropsGetAll 
+				append curLi btnUserPropsSetAll 
+				append curLi btnUserPropsNameCheck
+				append curLi btnUserPropsNameGet 
+				append curLi btnUserPropsNameSet 
+				append curLi btnUserPropsParentCheck 
+				append curLi btnUserPropsParentGet 
+				append curLi btnUserPropsParentSet 
+				append curLi btnUserPropsWirecolorCheck 
+				append curLi btnUserPropsWirecolorGet 
+				append curLi btnUserPropsWirecolorSet 
+				append curLi btnUserPropsDateGet 
+				append curLi btnUserPropsDateSet 
 
 				-- Initialize the List View
 				rbi.lvSetproperties lvMain
@@ -429,12 +491,8 @@ struct rbInterfacesStruct
 
 				-- TODO: Remove this stuff, because it is for debug mode
 				-- Initialize the toolset to the default mode
-				rigBuddy.interfaces.uiMainMode "Naming"
-				--fnNameDupeCheck()
-				--fnNameAutoCheck()
-				--fnNamePrefixCheck()
-				fnnNameUPCheck()
-
+				-- rigBuddy.interfaces.uiMainMode "Skinning"
+				rigBuddy.interfaces.uiMainMode "User Properties"
 			)
 
  			-- Modify the UI items positions, when the window is resized
@@ -448,6 +506,7 @@ struct rbInterfacesStruct
   				labelStatus.pos 				= [10,(uiMainRollout.height - 15)]
 			)
 
+			-- Naming event handlers
 			on btnNameDupeCheck 	pressed do ( fnNameDupeCheck() )
 			on btnNameDupeSelect 	pressed do ( fnNameDupeSelect() )
 			on btnNameAutoCheck 	pressed do ( fnNameAutoCheck() )
@@ -455,6 +514,24 @@ struct rbInterfacesStruct
 			on btnNamePrefixCheck 	pressed do ( fnNamePrefixCheck() )
 			on btnNamePrefixSelect 	pressed do ( fnNamePrefixDo "select" )
 			on btnNamePrefixApply 	pressed do ( fnNamePrefixDo "apply" )
+			on btnNameUPCheck		pressed do ( fnNameUPCheck() )
+			on btnNameUPGet			pressed do ( fnNameUPGet() )
+			on btnNameUPSet			pressed do ( fnNameUPSet() )
+
+			-- UserProps event handlers
+			on btnUserPropsGetAll 			pressed do ()
+			on btnUserPropsSetAll 			pressed do ()
+			on btnUserPropsNameCheck		pressed do ()
+			on btnUserPropsNameGet 			pressed do ()
+			on btnUserPropsNameSet 			pressed do ()
+			on btnUserPropsParentCheck 		pressed do ()
+			on btnUserPropsParentGet 		pressed do ()
+			on btnUserPropsParentSet 		pressed do ()
+			on btnUserPropsWirecolorCheck 	pressed do ()
+			on btnUserPropsWirecolorGet 	pressed do ()
+			on btnUserPropsWirecolorSet 	pressed do ()
+			on btnUserPropsDateGet 			pressed do ()
+			on btnUserPropsDateSet 			pressed do ()
 		)
 
 		-- Construct the Main UI Rollout and return it
@@ -463,7 +540,8 @@ struct rbInterfacesStruct
 		-- Set some things for the UI
 		--SetDialogPos uiMainRollout [500,300]
 		uiMainRollout.height = 300
-		SetDialogPos uiMainRollout [1000,150]
+		--SetDialogPos uiMainRollout [1000,150]
+		SetDialogPos uiMainRollout [1337,2080]
 
 		return uiMainRollout
 	),

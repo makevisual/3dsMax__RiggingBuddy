@@ -915,6 +915,7 @@ function rbLibInit  = (
 		(
 			struct report
 			(
+				id 			= undefined,
 				pass 		= undefined,
 				currentVal 	= undefined,
 				storedVal 	= undefined
@@ -924,6 +925,7 @@ function rbLibInit  = (
 
 			newReport.currentVal = rbLib.collectNodeName arg_node
 			newReport.storedVal = rbLib.getUserPropsNodeName arg_node
+			newReport.id = ( getAnimByHandle arg_node )
 
 			if newReport.currentVal == newReport.storedVal then
 			(
