@@ -15,6 +15,7 @@ struct rigBuddyStruct
 	uiMainItems	= undefined,		-- holds the ui items to be worked with
 	uiAbout 	= undefined,		-- main ui item stored on here
 	lib 		= undefined,		-- rbLib.ms, and sublibraries - all working functions - instantiated here
+	report 		= undefined,		-- A nice reference point for a report, to be easily found
 	data 		= undefined 		-- global data location
 )
 
