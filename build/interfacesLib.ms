@@ -47,32 +47,32 @@ struct rbInterfacesStruct
 		if arg_mode == "Meshes"	then
 		(
 			for item in rbuimi.uiMeshes do ( try( item.visible = true )catch() )
-			rigBuddy.uiMain.height = 200
+			try( rigBuddy.uiMain.height = 200 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
 		if arg_mode == "Baking"	then
 		(
 			for item in rbuimi.uiBaking	do ( try( item.visible = true )catch() )
-			rigBuddy.uiMain.height = 200
+			try( rigBuddy.uiMain.height = 200 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
 		if arg_mode == "Skinning" then
 		(
 			for item in rbuimi.uiSkinning 		do ( try( item.visible = true )catch() )
-			rigBuddy.uiMain.height = 200
+			try( rigBuddy.uiMain.height = 400 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
 		if arg_mode == "Rigging" then
 		(
 			for item in rbuimi.uiRigging 		do ( try( item.visible = true )catch() )
-			rigBuddy.uiMain.height = 300
+			try( rigBuddy.uiMain.height = 300 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
 		if arg_mode == "Naming" then
 		(
 			for item in rbuimi.uiNaming do ( try( item.visible = true )catch() )
-			rigBuddy.uiMain.height = 300
+			try( rigBuddy.uiMain.height = 300 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
 		if arg_mode == "User Properties" then
 		(
 			for item in rbuimi.uiUserProperties 	do ( try( item.visible = true )catch() )
-			rigBuddy.uiMain.height = 300
+			try( rigBuddy.uiMain.height = 350 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
 
 	),
@@ -100,7 +100,7 @@ struct rbInterfacesStruct
 			subMenu		"Mode"
 			(
 				menuItem	miRigging			"Rigging"
-				menuItem	miMeshes			"Meshes"
+				--menuItem	miMeshes			"Meshes"
 				menuItem	miBaking			"Baking"
 				menuItem	miSkinning			"Skinning"
 				menuItem	miNaming			"Naming"
@@ -136,51 +136,86 @@ struct rbInterfacesStruct
 			label 			labelStatus					"Status: initializing"			pos:[0,0]	align:#left	
 			progressbar 	progBar1 					width:990 						pos:[0,0] 	height:8 value:80 color:[0,60,90]
 
-			label 			labBaking					"Baking Tools"						pos:[10,10]	align:#left	
-				button 			btnBakeAndSave 			"Bake and Save" 				align:#left
+			label 			labRigging					"Rigging Tools"					pos:[10,10]	align:#left	
 
-			label 			labMeshes					"Mesh Tools"						pos:[10,10]	align:#left
-			label 			labRigging					"Rigging Tools"						pos:[10,10]	align:#left	
-			label 			labSkinning					"Skinning Tools"					pos:[10,10]	align:#left	
+			label 			labBaking					"Baking Tools"															pos:[10,10]	align:#left	
+				label 			labBakePC				"Point Cache modifier:"													pos:[24,30]
+				button 			btnBakePCCheck 			"Check selection for Point Cache modifiers"								pos:[24,45] width:300
+				button 			btnBakePCSelect 		"Select"																pos:[325,45] width:85 enabled:false
+				button 			btnBakePCAdd 			"Add point cache modifier above skin to selection"						pos:[24,70] width:390
+				button 			btnBakePCSwapSkin		"Convert skin modifiers to Point Cache modifiers skin in selection"		pos:[24,95] width:390
 
-				-- button 			btn
+				--button 			btnBakeAndSave 			"Bake and Save" 				align:#left
 
-			label 			labNaming					"Naming Tools"						pos:[10,10]	align:#left	
+			label 			labMeshes					"Mesh Tools"					pos:[10,10]	align:#left
 
-				button 			btnNameDupeCheck 		"Check selection for duplicate names "						pos:[10,30]	 	align:#left	width:300
-				button 			btnNameDupeSelect 		"Select "													pos:[310,30] 	align:#left	width:100 enabled:false
+			label 			labSkinning					"Skinning Tools"				pos:[10,10]	align:#left	
 
-				button 			btnNameAutoCheck 		"Preview Auto Generated Unique name on selection "			pos:[10,60] 	align:#left	width:300 
-				button 			btnNameAutoApply 		"Apply "													pos:[310,60] 	align:#left	width:100 enabled:false
+				label 			labSkinModChecks		"Skin modifier:"												pos:[24,30]
+				button 			btnSkinCheck 			"Check selection for skin modifiers"							pos:[24,45] width:300
+				button 			btnSkinSelect 			"Select"														pos:[325,45] width:85 enabled:false
+				button 			btnSkinSafeMods 		"Check for unsafe modifiers under skins modifiers"				pos:[24,67] width:300
+				button 			btnSkinSafeModsSelect 	"Select"														pos:[325,67] width:85 enabled:false
 
-				button 			btnNamePrefixCheck 		"Check hierarchy prefix tags against Global "				pos:[10,90]		align:#left	width:300
-				button 			btnNamePrefixSelect 	"Select "													pos:[310,90] 	align:#left	width:100 enabled:false
-				button 			btnNamePrefixApply 		"Apply "													pos:[310,112] 	align:#left	width:100 enabled:false
+				label 			labSkinModOp			"Skin modifier operations:"										pos:[24,95]
+				button 			btnSkinDeformReset 		"Skin Deformmations Reset"										pos:[24,110] width:385
+				button 			btnSkinPivotReset 		"Set pivot of skinned mesh to origin, preserving offset"		pos:[24,132] width:385
 
-				button  		btnNameUPCheck 			"Check selection for stored name" 							pos:[10,140] align:#left	width:400
-				button  		btnNameUPGet 			"Fetch stored name" 										pos:[10,162] align:#left	width:200
-				button  		btnNameUPSet 			"Store current name" 										pos:[210,162] align:#left	width:200
+				label 			labSkinBinding			"Skin weights and binding:"										pos:[24,160]
+				button 			btnSkinwrapStealDo 		"Skin using Skin Wrap - ( last selected will recive the skin )" pos:[24,175] width:385
+				button 			btnSkinParent 			"Skin Parent - ( last selected will be the parent )"  			pos:[24,197] width:385
 
-			label 			labUserProps		"User Property Tools"				pos:[10,10]	align:#left
+				label 			labMeshClean			"Mesh Prep: "													pos:[24,225] 			
+				button 			btnMeshClean			"Collapse and reset mesh "										pos:[24,240] width:385
 
-				button  		btnUserPropsGetAll 			"Fetch all" 											pos:[10,30] align:#left		width:132
-				button  		btnUserPropsSetAll 			"Store all" 											pos:[145,30] align:#left	width:132
-				button  		btnUserPropsClearAll 		"Clear all" 											pos:[280,30] align:#left	width:132
+				label 			labSkinProxy			"Build Proxy Geo: ( feature pending )"							pos:[24,270] 			enabled:false
+				button 			btnSkinProxyDo			"Generate symmetrical reduced mesh for weighting from selection"pos:[24,285] width:385 	enabled:false
+				spinner 		spnPolycount 			"Polycount" 	type:#integer range:[10,5000,1000]				pos:[40,307] width:370 	enabled:false
 
-				button  		btnUserPropsNameCheck 		"Check selections stored name" 							pos:[10,60] align:#left		width:400
-				button  		btnUserPropsNameGet 		"Fetch stored name" 									pos:[10,82] align:#left		width:132
-				button  		btnUserPropsNameSet 		"Store current name" 									pos:[210,82] align:#left	width:132
+			label 			labNaming					"Naming Tools"					pos:[10,10]	align:#left	
 
-				button  		btnUserPropsParentCheck 	"Check selections stored parent" 						pos:[10,110] align:#left	width:400
-				button  		btnUserPropsParentGet 		"Restore parent" 										pos:[10,132] align:#left	width:132
-				button  		btnUserPropsParentSet 		"Store parent" 											pos:[210,132] align:#left	width:132
+				button 			btnNameDupeCheck 		"Check selection for duplicate names "						pos:[10,30]	 	width:300
+				button 			btnNameDupeSelect 		"Select "													pos:[310,30] 	width:100 enabled:false
 
-				button  		btnUserPropsWirecolorCheck 	"Check selections stored wirecolor" 					pos:[10,160] align:#left	width:400
-				button  		btnUserPropsWirecolorGet 	"Restore wirecolor" 									pos:[10,182] align:#left	width:132
-				button  		btnUserPropsWirecolorSet 	"Store wirecolor" 										pos:[210,182] align:#left	width:132
+				button 			btnNameAutoCheck 		"Preview Auto Generated Unique name on selection "			pos:[10,60] 	width:300 
+				button 			btnNameAutoApply 		"Apply "													pos:[310,60] 	width:100 enabled:false
 
-				button  		btnUserPropsDateGet 		"Check publish date" 									pos:[10,212] align:#left	width:132
-				button  		btnUserPropsDateSet 		"Store current date" 									pos:[210,212] align:#left	width:132
+				button 			btnNamePrefixCheck 		"Check hierarchy prefix tags against Global "				pos:[10,90]		width:300
+				button 			btnNamePrefixSelect 	"Select "													pos:[310,90] 	width:100 enabled:false
+				button 			btnNamePrefixApply 		"Apply "													pos:[310,112] 	width:100 enabled:false
+
+				button  		btnNameUPCheck 			"Check selection for stored name" 							pos:[10,140] 	width:400
+				button  		btnNameUPGet 			"Fetch stored name" 										pos:[10,162] 	width:200
+				button  		btnNameUPSet 			"Store current name" 										pos:[210,162] 	width:200
+
+			label 			labUserProps				"User Property Tools"			pos:[10,10]	align:#left
+
+				button  		btnUserPropsGetAll 			"Fetch all" 											pos:[10,30] 	width:134
+				button  		btnUserPropsSetAll 			"Store all" 											pos:[144,30] 	width:134
+				button  		btnUserPropsClearAll 		"Clear all" 											pos:[278,30] 	width:134
+				
+				label 			labUserPropsName			"Name:"													pos:[24,60]	
+				button  		btnUserPropsNameCheck 		"Check name" 											pos:[20,75] 	width:390
+				button  		btnUserPropsNameGet 		"Fetch name" 											pos:[20,97] 	width:130
+				button  		btnUserPropsNameSet 		"Store name" 											pos:[150,97] 	width:130
+				button  		btnUserPropsNameClear 		"Clear name" 											pos:[280,97] 	width:130
+
+				label 			labUserPropsParent			"Parent:"												pos:[24,130] 
+				button  		btnUserPropsParentCheck 	"Check parent" 											pos:[20,145] 	width:390
+				button  		btnUserPropsParentGet 		"Fetch parent" 											pos:[20,167] 	width:130
+				button  		btnUserPropsParentSet 		"Store parent" 											pos:[150,167]	width:130
+				button  		btnUserPropsParentClear		"Clear parent" 											pos:[280,167] 	width:130
+
+				label 			labUserPropsWirecolor		"Wirecolor:"											pos:[24,200] 
+				button  		btnUserPropsWirecolorCheck 	"Check wirecolor" 										pos:[20,215] 	width:390
+				button  		btnUserPropsWirecolorGet 	"Fetch wirecolor" 										pos:[20,237] 	width:130
+				button  		btnUserPropsWirecolorSet 	"Store wirecolor" 										pos:[150,237] 	width:130
+				button  		btnUserPropsWirecolorClear 	"Clear wirecolor" 										pos:[280,237] 	width:130
+
+				label 			labUserPropsDate			"Publish Date:"											pos:[24,270] 
+				button  		btnUserPropsDateGet 		"Check publish date" 									pos:[20,285] 	width:130
+				button  		btnUserPropsDateSet 		"Store current date" 									pos:[150,285] 	width:130
+				button  		btnUserPropsDateClear 		"Clear publish date" 									pos:[280,285] 	width:130
 
 			function fnNameUPCheck = 
 			(
@@ -450,6 +485,22 @@ struct rbInterfacesStruct
 
 				curLi = rigBuddy.uiMainItems.uiSkinning
 				append curLi labSkinning
+				append curLi labSkinModChecks		
+				append curLi btnSkinCheck 			
+				append curLi btnSkinSelect 			
+				append curLi btnSkinSafeMods 		
+				append curLi btnSkinSafeModsSelect 	
+				append curLi labSkinModOp			
+				append curLi btnSkinDeformReset 		
+				append curLi btnSkinPivotReset 		
+				append curLi labSkinBinding			
+				append curLi btnSkinwrapStealDo 		
+				append curLi btnSkinParent 			
+				append curLi labSkinProxy
+				append curLi labMeshClean
+				append curLi btnMeshClean		
+				append curLi btnSkinProxyDo			
+		 		append curLi spnPolycount 			
 
 				curLi = rigBuddy.uiMainItems.uiRigging 		
 				append curLi labRigging
@@ -469,19 +520,28 @@ struct rbInterfacesStruct
 
 				curLi = rigBuddy.uiMainItems.uiUserProperties
 				append curLi labUserProps
-				append curLi btnUserPropsGetAll 
-				append curLi btnUserPropsSetAll 
+				append curLi btnUserPropsGetAll
+				append curLi btnUserPropsSetAll
+				append curLi btnUserPropsClearAll
+				append curLi labUserPropsName
 				append curLi btnUserPropsNameCheck
-				append curLi btnUserPropsNameGet 
-				append curLi btnUserPropsNameSet 
-				append curLi btnUserPropsParentCheck 
-				append curLi btnUserPropsParentGet 
-				append curLi btnUserPropsParentSet 
-				append curLi btnUserPropsWirecolorCheck 
-				append curLi btnUserPropsWirecolorGet 
-				append curLi btnUserPropsWirecolorSet 
-				append curLi btnUserPropsDateGet 
-				append curLi btnUserPropsDateSet 
+				append curLi btnUserPropsNameGet
+				append curLi btnUserPropsNameSet
+				append curLi btnUserPropsNameClear
+				append curLi labUserPropsParent
+				append curLi btnUserPropsParentCheck
+				append curLi btnUserPropsParentGet
+				append curLi btnUserPropsParentSet
+				append curLi btnUserPropsParentClear
+				append curLi labUserPropsWirecolor
+				append curLi btnUserPropsWirecolorCheck
+				append curLi btnUserPropsWirecolorGet
+				append curLi btnUserPropsWirecolorSet
+				append curLi btnUserPropsWirecolorClear
+				append curLi labUserPropsDate
+				append curLi btnUserPropsDateGet
+				append curLi btnUserPropsDateSet
+				append curLi btnUserPropsDateClear
 
 				-- Initialize the List View
 				rbi.lvSetproperties lvMain
@@ -492,7 +552,9 @@ struct rbInterfacesStruct
 				-- TODO: Remove this stuff, because it is for debug mode
 				-- Initialize the toolset to the default mode
 				-- rigBuddy.interfaces.uiMainMode "Skinning"
-				rigBuddy.interfaces.uiMainMode "User Properties"
+				-- rigBuddy.interfaces.uiMainMode "User Properties"
+				rigBuddy.interfaces.uiMainMode "Baking"
+
 			)
 
  			-- Modify the UI items positions, when the window is resized
@@ -539,9 +601,9 @@ struct rbInterfacesStruct
 		
 		-- Set some things for the UI
 		--SetDialogPos uiMainRollout [500,300]
-		uiMainRollout.height = 300
-		--SetDialogPos uiMainRollout [1000,150]
-		SetDialogPos uiMainRollout [1337,2080]
+		uiMainRollout.height = 400
+		SetDialogPos uiMainRollout [1000,150]
+		-- SetDialogPos uiMainRollout [1337,2080]
 
 		return uiMainRollout
 	),
