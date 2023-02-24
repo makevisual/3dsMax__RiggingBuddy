@@ -519,6 +519,10 @@ function rbLibInit  = (
 			)
 		),
 
+		function createRay arg_list =
+		(
+		),
+
 --- Name Functions ---
 
 		-- Completed 2023/01/18

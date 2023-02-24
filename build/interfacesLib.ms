@@ -52,7 +52,7 @@ struct rbInterfacesStruct
 		if arg_mode == "Baking"	then
 		(
 			for item in rbuimi.uiBaking	do ( try( item.visible = true )catch() )
-			try( rigBuddy.uiMain.height = 200 )catch() -- inside try catch, because UI cannot be set before its first running
+			try( rigBuddy.uiMain.height = 250 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
 		if arg_mode == "Skinning" then
 		(
@@ -106,10 +106,10 @@ struct rbInterfacesStruct
 				menuItem	miNaming			"Naming"
 				menuItem	miUserProperties	"User Properties"
 			)	
-			subMenu		"Utilities"
-			(
-				menuItem	miAssetInspector	"Asset Inspector"
-			)	
+			--subMenu		"Utilities"
+			--(
+			--	menuItem	miAssetInspector	"Asset Inspector"
+			--)	
 			subMenu		"Help"
 			(
 				--menuItem 	MI_Help_Help		"Help"
@@ -134,18 +134,30 @@ struct rbInterfacesStruct
 		(
 			dotNetControl 	lvMain 						"system.windows.forms.listView" pos:[420,0] height:200 width:575					
 			label 			labelStatus					"Status: initializing"			pos:[0,0]	align:#left	
-			progressbar 	progBar1 					width:990 						pos:[0,0] 	height:8 value:80 color:[0,60,90]
+			progressbar 	progBar1 					width:990 						pos:[0,0] 	height:6 value:80 color:[0,90,60]
+			progressbar 	progBar2 					width:990 						pos:[0,0] 	height:6 value:50 color:[0,60,90]
 
-			label 			labRigging					"Rigging Tools"					pos:[10,10]	align:#left	
+			label 			labRigging					"Rigging:"														pos:[10,10]	
+				label 			labRigScale				"Transforms:"													pos:[24,30]
+				button 			btnRigScaleCheck 		"Check selection scaled transforms"								pos:[24,45] width:300
+				button 			btnRigScaleSelect 		"Select"														pos:[325,45] width:85 enabled:false
 
-			label 			labBaking					"Baking Tools"															pos:[10,10]	align:#left	
-				label 			labBakePC				"Point Cache modifier:"													pos:[24,30]
-				button 			btnBakePCCheck 			"Check selection for Point Cache modifiers"								pos:[24,45] width:300
-				button 			btnBakePCSelect 		"Select"																pos:[325,45] width:85 enabled:false
-				button 			btnBakePCAdd 			"Add point cache modifier above skin to selection"						pos:[24,70] width:390
-				button 			btnBakePCSwapSkin		"Convert skin modifiers to Point Cache modifiers skin in selection"		pos:[24,95] width:390
+				label 			labRigHeirarchy			"Heirarchiy:"													pos:[24,70]
+				button 			btnRigHeirReparent 		"Reparent all nodes to their global"							pos:[24,85] width:390
 
-				--button 			btnBakeAndSave 			"Bake and Save" 				align:#left
+				label 			labRigHelpers			"Helpers:"														pos:[24,110]
+				button 			btnRigHelperHypot 		"Create hypotenuse point"										pos:[24,125] width:390
+				button 			btnRigHelperRay 		"Create bound ray between 2 objects  ( feature pending )"		pos:[24,147] width:390 enabled:false
+
+			label 			labBaking					"Baking Tools"													pos:[10,10]	align:#left	
+				label 			labBakePC				"Point Cache modifier:"											pos:[24,30]
+				button 			btnBakePCCheck 			"Check selection for Point Cache modifiers"						pos:[24,45] width:300
+				button 			btnBakePCSelect 		"Select"														pos:[325,45] width:85 enabled:false
+				button 			btnBakePCAdd 			"Add point cache modifier above skin"							pos:[24,70] width:385
+				button 			btnBakePCSwapSkin		"Convert skin modifiers to Point Cache modifiers in selection"	pos:[24,95] width:385
+				label 			labBakeTFB				"Transform Baker: ( feature pending )"							pos:[24,125] enabled:false
+				label 			labBakePCB				"Point Cache Batch: ( feature pending )"						pos:[24,145] enabled:false
+				label 			labBakeBNS				"Bake N Save: ( feature pending )"								pos:[24,165] enabled:false
 
 			label 			labMeshes					"Mesh Tools"					pos:[10,10]	align:#left
 
@@ -217,383 +229,597 @@ struct rbInterfacesStruct
 				button  		btnUserPropsDateSet 		"Store current date" 									pos:[150,285] 	width:130
 				button  		btnUserPropsDateClear 		"Clear publish date" 									pos:[280,285] 	width:130
 
-			function fnNameUPCheck = 
-			(
-				reports = #()
-				selarr 	= selection as array 
-
-				-- For each item in selection, examine it
-				for sel in selarr do 
+			-- Rigging Functions
+				function fnRigScaleCheck =
 				(
-					newReport = rigBuddy.lib.compareUserPropsNodeName sel
-					append reports newReport
-				)
+					print "fnRigScaleCheck"
 
-				rbi = rigBuddy.interfaces
-				rbi.lvSetColumns	lvMain #("","Match","Current Name","Stored Name") #(22,60,250,250)	
-				rows = #()
-
-				for report in reports do 
-				(
-					-- Make a new List view Item
-					li=dotNetObject "System.Windows.Forms.ListViewItem" ""
-					li.UseItemStyleForSubItems = false					
-					li.subitems.add ( report.pass as string )
-					li.subitems.add ( report.currentVal )
-					li.subitems.add ( report.storedVal )
-
-					append rows li
-				)
-
-				-- Add the rows
-				lvMain.items.addRange rows
-
-				rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " names compared")
-			)
-
-			function fnNameUPSet =
-			(
-				selArr = (selection as array)
-				for sel in selArr do
-				(
-					rigBuddy.lib.setUserPropsNodeName sel
-				)
-
-				rigBuddy.uiMain.labelStatus.text = ( ( selArr.count as string ) + " names stored")
-			)
-
-			function fnNameUPGet =
-			(
-				selArr = (selection as array)
-				for sel in selArr do
-				(
-					rigBuddy.lib.restoreUserPropsNodeName sel
-				)
-
-				rigBuddy.uiMain.labelStatus.text = ( ( selArr.count as string ) + " names fetched")
-			)
-
-			function fnNameAutoCheck = 
-			(
-				rigBuddy.report = ( rbLib.namesMakeUniqueCollect ( selection as array ) )
-
-				rbi = rigBuddy.interfaces
-				rbi.lvSetColumns	lvMain #("","Animhandle","Current Name","New Name") #(22,80,240,240)	
-
-				-- combine all the reports
-				updates = #()
-				join updates rigBuddy.report.updateNone
-				join updates rigBuddy.report.updateAppend
-				join updates rigBuddy.report.updateRebuild
-
-				-- Populate the rows
-				rows = #()
-
-				for udate in updates do 
-				(
-					-- Make a new List view Item
-					li=dotNetObject "System.Windows.Forms.ListViewItem" ""
-					li.UseItemStyleForSubItems = false
-					
-					obj = (getAnimByHandle udate.handle )
-					li.subitems.add ( ( udate.handle as string ) )
-					li.subitems.add ( obj.name )
-					li.subitems.add ( udate.newName )
-
-					append rows li
-				)
-
-				-- Add the rows
-				lvMain.items.addRange rows
-
-				-- Update the UI with what has happened
-				if updates.count >= 1 then
-				(
-					btnNameAutoApply.enabled = true
-					rigBuddy.uiMain.labelStatus.text = ( ( ( updates.count ) as string ) + " renames prepared" )
-				)
-				else
-				(
-					btnNameAutoApply.enabled = false
-					rigBuddy.uiMain.labelStatus.text = ( "No items to rename")
-				)
-			)
-
-			function fnNameAutoApply = 
-			(
-				rbLib.namesMakeUnique rigBuddy.report
-
-				updates = #()
-				join updates rigBuddy.report.updateNone
-				join updates rigBuddy.report.updateAppend
-				join updates rigBuddy.report.updateRebuild
-
-				btnNameAutoApply.enabled = false
-				rigBuddy.uiMain.labelStatus.text = ( ( ( updates.count ) as string ) + " objects renamed ")
-			)
-
-			function fnNameDupeSelect = 
-			(
-				select (collect3dLib.collectByAnimhandle rigBuddy.report.duplicateNamesIds)
-				rigBuddy.uiMain.labelStatus.text = ( ( ( rigBuddy.report.duplicateNamesIds.count ) as string ) + " dupilcates selected ")
-			)
-
-			function fnNameDupeCheck = 
-			(
-				-- run the duplicate check function
-				rigBuddy.report = ( rbLib.namesCheckForDuplicates ( selection as array ) )
-
-				-- Set the list view columns
-				rbi = rigBuddy.interfaces
-				rbi.lvSetColumns	lvMain #("","Animhandle","Name") #(22,80,480)
-
-				-- Populate the rows
-				rows = #()
-
-				for id in rigBuddy.report.duplicateNamesIds do 
-				(
-					-- Make a new List view Item
-					li=dotNetObject "System.Windows.Forms.ListViewItem" ""
-					li.UseItemStyleForSubItems = false
-					
-					li.subitems.add ( ( id as string ) )
-					obj = (getAnimByHandle id )
-					li.subitems.add ( obj.name )
-
-					append rows li
-				)
-
-				-- Add the rows
-				lvMain.items.addRange rows
-
-				-- Update the UI with what has happened
-				if rigBuddy.report.pass == false then
-				(
-					btnNameDupeSelect.enabled = true
-					rigBuddy.uiMain.labelStatus.text = ( ( ( rigBuddy.report.duplicateNamesIds.count ) as string ) + " dupilcates found ")
-				)
-				if rigBuddy.report.pass == true then
-				(
-					btnNameDupeSelect.enabled = false
-					rigBuddy.uiMain.labelStatus.text = ( "No dupilcates found ")
-				)
-			)
-
-			function fnNamePrefixDo arg_mode = 
-			(
-				dataSet = rigBuddy.report.protoplastsData
-
-				operands = #()
-
-				for data in dataSet do 
-				(
-					for id in data.failNamesIds do 
-					(
-						curAnim = ( getAnimByHandle id )
-						append operands curAnim
-
-						-- If in apply mode, change the name
-						if arg_mode == "apply" then ( curAnim.name = ( data.nameTag + curAnim.name ) )
-					)
-				)
-
-				-- if in select mode, select the objects
-				if arg_mode == "select" then
-				(
-					select operands
-					rigBuddy.uiMain.labelStatus.text = ( ( operands.count as string ) + " objects selected ")
-				)
-
-				-- If in apply mode, clear out list view, disable buttons
-				if arg_mode == "apply" then
-				(
-					-- Set the list view columns
-
-					btnNamePrefixSelect.enabled = false
-					btnNamePrefixApply.enabled = false
-					lvMain.items.clear()
-
-					rigBuddy.uiMain.labelStatus.text = ( ( operands.count as string ) + " objects renamed ")
-
-				)
-			)
-
-			function fnNamePrefixCheck =
-			(
-				rigBuddy.report = ( rbLib.namesMakeValidPrefixesCollect ( selection as array ) )
-				print rigBuddy.report
-
-				-- Set the list view columns
-				rbi = rigBuddy.interfaces
-				rbi.lvSetColumns	lvMain #("","Tag","Current Name","New Name") #(22,60,250,250)
-
-				-- Populate the rows
-				failIds = #()
-				rows 	= #()
-
-				dataSet = rigBuddy.report.protoplastsData
-
-				for data in dataSet do 
-				(
-					for id in data.failNamesIds do 
-					(
-					
-						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
-						li.UseItemStyleForSubItems = false
+					reports = #()
+					selarr 	= selection as array 
 	
-						li.subitems.add data.nameTag 
-						curAnim = ( getAnimByHandle id )
-						li.subitems.add ( curAnim.name )
-						li.subitems.add ( data.nameTag + curAnim.name )
+					-- For each item in selection, examine it
+					for sel in selarr do 
+					(
+						newReport = rigBuddy.lib.checkForScaledTransforms sel
+						append reports newReport
+					)
+	
+					print reports
 
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Scaled","Animhandle","Scaling") #(22,60,250,250)	
+					rows = #()
+--	
+--					for report in reports do 
+--					(
+--						-- Make a new List view Item
+--						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+--						li.UseItemStyleForSubItems = false					
+--						li.subitems.add ( report.pass as string )
+--						li.subitems.add ( report.currentVal )
+--						li.subitems.add ( report.storedVal )
+--	
+--						append rows li
+--					)
+--	
+--					-- Add the rows
+--					lvMain.items.addRange rows
+--	
+--					rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " names compared")					
+				)
+				
+				function fnRigScaleSelect =
+				(
+					print "fnRigScaleSelect"
+				)
+				
+				function fnRigHeirReparent =
+				(
+					print "fnRigHeirReparent"
+				)
+				
+				function fnRigHelperHypot =
+				(
+					print "fnRigHelperHypot"
+				)
+				
+				function fnRigHelperRay =
+				(
+					print "fnRigHelperRay"
+				)
+
+			-- Baking Functions
+				function fnBakePCCheck = 
+				(
+				)
+
+				function fnBakePCSelect = 
+				(
+				)
+
+				function fnBakePCAdd = 
+				(
+				)
+
+				function fnBakePCSwapSkin = 
+				(
+				)
+
+			-- Skinning Functions
+				function fnSkinCheck =
+				(
+				)
+
+				function fnSkinSelect =
+				(
+				)
+
+				function fnSkinSafeMods =
+				(
+				)
+
+				function fnSkinSafeModsSelect =
+				(
+				)
+
+				function fnSkinDeformReset =
+				(
+				)
+
+				function fnSkinPivotReset =
+				(
+				)
+
+				function fnSkinwrapStealDo =
+				(
+				)
+
+				function fnSkinParent =
+				(
+				)
+
+				function fnMeshClean =
+				(
+				)
+
+				function fnSkinProxyDo =
+				(
+				)
+
+			-- Naming Functions
+				function fnNameUPCheck = 
+				(
+					reports = #()
+					selarr 	= selection as array 
+	
+					-- For each item in selection, examine it
+					for sel in selarr do 
+					(
+						newReport = rigBuddy.lib.compareUserPropsNodeName sel
+						append reports newReport
+					)
+	
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Match","Current Name","Stored Name") #(22,60,250,250)	
+					rows = #()
+	
+					for report in reports do 
+					(
+						-- Make a new List view Item
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( report.pass as string )
+						li.subitems.add ( report.currentVal )
+						li.subitems.add ( report.storedVal )
+	
 						append rows li
 					)
+	
+					-- Add the rows
+					lvMain.items.addRange rows
+	
+					rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " names compared")
 				)
-
-				-- Add the rows
-				lvMain.items.addRange rows
-
-				-- enable/disale dependent buttons
-				if dataSet.count >= 1 then 
+	
+				function fnNameUPSet =
 				(
-					btnNamePrefixSelect.enabled = true
-					btnNamePrefixApply.enabled = true
-
+					selArr = (selection as array)
+					for sel in selArr do
+					(
+						rigBuddy.lib.setUserPropsNodeName sel
+					)
+	
+					rigBuddy.uiMain.labelStatus.text = ( ( selArr.count as string ) + " names stored")
+					)
+		
+					function fnNameUPGet =
+					(
+					selArr = (selection as array)
+					for sel in selArr do
+					(
+						rigBuddy.lib.restoreUserPropsNodeName sel
+					)
+	
+					rigBuddy.uiMain.labelStatus.text = ( ( selArr.count as string ) + " names fetched")
 				)
-				else 
+	
+				function fnNameAutoCheck = 
 				(
-					btnNamePrefixSelect.enabled = false
-					btnNamePrefixApply.enabled = false
+					rigBuddy.report = ( rbLib.namesMakeUniqueCollect ( selection as array ) )
+	
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Animhandle","Current Name","New Name") #(22,80,240,240)	
+	
+					-- combine all the reports
+					updates = #()
+					join updates rigBuddy.report.updateNone
+					join updates rigBuddy.report.updateAppend
+					join updates rigBuddy.report.updateRebuild
+	
+					-- Populate the rows
+					rows = #()
+	
+					for udate in updates do 
+					(
+						-- Make a new List view Item
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false
+						
+						obj = (getAnimByHandle udate.handle )
+						li.subitems.add ( ( udate.handle as string ) )
+						li.subitems.add ( obj.name )
+						li.subitems.add ( udate.newName )
+	
+						append rows li
+					)
+	
+					-- Add the rows
+					lvMain.items.addRange rows
+	
+					-- Update the UI with what has happened
+					if updates.count >= 1 then
+					(
+						btnNameAutoApply.enabled = true
+						rigBuddy.uiMain.labelStatus.text = ( ( ( updates.count ) as string ) + " renames prepared" )
+					)
+					else
+					(
+						btnNameAutoApply.enabled = false
+						rigBuddy.uiMain.labelStatus.text = ( "No items to rename")
+					)
+				)
+	
+				function fnNameAutoApply = 
+				(
+					rbLib.namesMakeUnique rigBuddy.report
+	
+					updates = #()
+					join updates rigBuddy.report.updateNone
+					join updates rigBuddy.report.updateAppend
+					join updates rigBuddy.report.updateRebuild
+	
+					btnNameAutoApply.enabled = false
+					rigBuddy.uiMain.labelStatus.text = ( ( ( updates.count ) as string ) + " objects renamed ")
+				)
+	
+				function fnNameDupeSelect = 
+				(
+					select (collect3dLib.collectByAnimhandle rigBuddy.report.duplicateNamesIds)
+					rigBuddy.uiMain.labelStatus.text = ( ( ( rigBuddy.report.duplicateNamesIds.count ) as string ) + " dupilcates selected ")
+				)
+	
+				function fnNameDupeCheck = 
+				(
+					-- run the duplicate check function
+					rigBuddy.report = ( rbLib.namesCheckForDuplicates ( selection as array ) )
+	
+					-- Set the list view columns
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Animhandle","Name") #(22,80,480)
+	
+					-- Populate the rows
+					rows = #()
+	
+					for id in rigBuddy.report.duplicateNamesIds do 
+					(
+						-- Make a new List view Item
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false
+						
+						li.subitems.add ( ( id as string ) )
+						obj = (getAnimByHandle id )
+						li.subitems.add ( obj.name )
+	
+						append rows li
+					)
+	
+					-- Add the rows
+					lvMain.items.addRange rows
+	
+					-- Update the UI with what has happened
+					if rigBuddy.report.pass == false then
+					(
+						btnNameDupeSelect.enabled = true
+						rigBuddy.uiMain.labelStatus.text = ( ( ( rigBuddy.report.duplicateNamesIds.count ) as string ) + " dupilcates found ")
+					)
+					if rigBuddy.report.pass == true then
+					(
+						btnNameDupeSelect.enabled = false
+						rigBuddy.uiMain.labelStatus.text = ( "No dupilcates found ")
+					)
+				)
+	
+				function fnNamePrefixDo arg_mode = 
+				(
+					dataSet = rigBuddy.report.protoplastsData
+	
+					operands = #()
+	
+					for data in dataSet do 
+					(
+						for id in data.failNamesIds do 
+						(
+							curAnim = ( getAnimByHandle id )
+							append operands curAnim
+	
+							-- If in apply mode, change the name
+							if arg_mode == "apply" then ( curAnim.name = ( data.nameTag + curAnim.name ) )
+						)
+					)
+	
+					-- if in select mode, select the objects
+					if arg_mode == "select" then
+					(
+						select operands
+						rigBuddy.uiMain.labelStatus.text = ( ( operands.count as string ) + " objects selected ")
+					)
+	
+					-- If in apply mode, clear out list view, disable buttons
+					if arg_mode == "apply" then
+					(
+						-- Set the list view columns
+	
+						btnNamePrefixSelect.enabled = false
+						btnNamePrefixApply.enabled = false
+						lvMain.items.clear()
+	
+						rigBuddy.uiMain.labelStatus.text = ( ( operands.count as string ) + " objects renamed ")
+	
+					)
+				)
+	
+				function fnNamePrefixCheck =
+				(
+					rigBuddy.report = ( rbLib.namesMakeValidPrefixesCollect ( selection as array ) )
+					print rigBuddy.report
+	
+					-- Set the list view columns
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Tag","Current Name","New Name") #(22,60,250,250)
+	
+					-- Populate the rows
+					failIds = #()
+					rows 	= #()
+	
+					dataSet = rigBuddy.report.protoplastsData
+	
+					for data in dataSet do 
+					(
+						for id in data.failNamesIds do 
+						(
+						
+							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+							li.UseItemStyleForSubItems = false
+		
+							li.subitems.add data.nameTag 
+							curAnim = ( getAnimByHandle id )
+							li.subitems.add ( curAnim.name )
+							li.subitems.add ( data.nameTag + curAnim.name )
+	
+							append rows li
+						)
+					)
+	
+					-- Add the rows
+					lvMain.items.addRange rows
+	
+					-- enable/disale dependent buttons
+					if dataSet.count >= 1 then 
+					(
+						btnNamePrefixSelect.enabled = true
+						btnNamePrefixApply.enabled = true
+	
+					)
+					else 
+					(
+						btnNamePrefixSelect.enabled = false
+						btnNamePrefixApply.enabled = false
+					)
+	
+					rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " object(s) found without matching tag ")
 				)
 
-				rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " object(s) found without matching tag ")
-			)
-
-			on uiMainRollout open do
-			(
-				-- Shorten some names
-				rbi 	= rigBuddy.interfaces
-				rbuimi 	= rigBuddy.uiMainItems
-
-				-- Store each of the ui items into their appropriate class
-				curLi = rigBuddy.uiMainItems.uiBaking
-				append curLi labBaking
-				append curLi btnBakeAndSave
+			-- UserProps Functions
+				function fnUserPropsGetAll =
+				(
+				)
 				
-				curLi = rigBuddy.uiMainItems.uiMeshes 
-				append curLi labMeshes
+				function fnUserPropsSetAll =
+				(
+				)
+				
+				function fnUserPropsNameCheck =
+				(
+				)
+				
+				function fnUserPropsNameGet =
+				(
+				)
+				
+				function fnUserPropsNameSet =
+				(
+				)
+				
+				function fnUserPropsParentCheck =
+				(
+				)
+				
+				function fnUserPropsParentGet =
+				(
+				)
+				
+				function fnUserPropsParentSet =
+				(
+				)
+				
+				function fnUserPropsWirecolorCheck =
+				(
+				)
+				
+				function fnUserPropsWirecolorGet =
+				(
+				)
+				
+				function fnUserPropsWirecolorSet =
+				(
+				)
+				
+				function fnUserPropsDateGet =
+				(
+				)
+				
+				function fnUserPropsDateSet =
+				(
+				)
 
-				curLi = rigBuddy.uiMainItems.uiSkinning
-				append curLi labSkinning
-				append curLi labSkinModChecks		
-				append curLi btnSkinCheck 			
-				append curLi btnSkinSelect 			
-				append curLi btnSkinSafeMods 		
-				append curLi btnSkinSafeModsSelect 	
-				append curLi labSkinModOp			
-				append curLi btnSkinDeformReset 		
-				append curLi btnSkinPivotReset 		
-				append curLi labSkinBinding			
-				append curLi btnSkinwrapStealDo 		
-				append curLi btnSkinParent 			
-				append curLi labSkinProxy
-				append curLi labMeshClean
-				append curLi btnMeshClean		
-				append curLi btnSkinProxyDo			
-		 		append curLi spnPolycount 			
+			-- Rigging event handlers
+				on btnRigScaleCheck 			pressed do ( fnRigScaleCheck() )
+				on btnRigScaleSelect 			pressed do ( fnRigScaleSelect() )
+				on btnRigHeirReparent 			pressed do ( fnRigHeirReparent() )
+				on btnRigHelperHypot 			pressed do ( fnRigHelperHypot() )
+				on btnRigHelperRay 				pressed do ( fnRigHelperRay() )
 
-				curLi = rigBuddy.uiMainItems.uiRigging 		
-				append curLi labRigging
+			-- Baking event handlers
+				on btnBakePCCheck 				pressed do ( fnBakePCCheck() )
+				on btnBakePCSelect 				pressed do ( fnBakePCSelect() )
+				on btnBakePCAdd 				pressed do ( fnBakePCAdd() )
+				on btnBakePCSwapSkin			pressed do ( fnBakePCSwapSkin() )
 
-				curLi = rigBuddy.uiMainItems.uiNaming
-				append curLi labNaming 		
-				append curLi btnNameDupeCheck
-				append curLi btnNameDupeSelect
-				append curLi btnNameAutoCheck
-				append curLi btnNameAutoApply
-				append curLi btnNamePrefixCheck 
-				append curLi btnNamePrefixSelect
-				append curLi btnNamePrefixApply 
-				append curLi btnNameUPCheck
-				append curLi btnNameUPGet
-				append curLi btnNameUPSet
-
-				curLi = rigBuddy.uiMainItems.uiUserProperties
-				append curLi labUserProps
-				append curLi btnUserPropsGetAll
-				append curLi btnUserPropsSetAll
-				append curLi btnUserPropsClearAll
-				append curLi labUserPropsName
-				append curLi btnUserPropsNameCheck
-				append curLi btnUserPropsNameGet
-				append curLi btnUserPropsNameSet
-				append curLi btnUserPropsNameClear
-				append curLi labUserPropsParent
-				append curLi btnUserPropsParentCheck
-				append curLi btnUserPropsParentGet
-				append curLi btnUserPropsParentSet
-				append curLi btnUserPropsParentClear
-				append curLi labUserPropsWirecolor
-				append curLi btnUserPropsWirecolorCheck
-				append curLi btnUserPropsWirecolorGet
-				append curLi btnUserPropsWirecolorSet
-				append curLi btnUserPropsWirecolorClear
-				append curLi labUserPropsDate
-				append curLi btnUserPropsDateGet
-				append curLi btnUserPropsDateSet
-				append curLi btnUserPropsDateClear
-
-				-- Initialize the List View
-				rbi.lvSetproperties lvMain
-				rbi.lvSetColumns	lvMain #("","") #(20,475)
-
-				labelStatus.text = "Status: Ready"
-
-				-- TODO: Remove this stuff, because it is for debug mode
-				-- Initialize the toolset to the default mode
-				-- rigBuddy.interfaces.uiMainMode "Skinning"
-				-- rigBuddy.interfaces.uiMainMode "User Properties"
-				rigBuddy.interfaces.uiMainMode "Baking"
-
-			)
-
- 			-- Modify the UI items positions, when the window is resized
-			on uiMainRollout resized arg do
-			(
-				if uiMainRollout.height < 120 then(uiMainRollout.height = 120)else()
-				if uiMainRollout.height > 1000 then(uiMainRollout.height = 1000)else()
-
- 				progBar1.pos 					= [5,(uiMainRollout.height - 25 )]					
-				uiMainRollout.lvMain.height 	= (uiMainRollout.height - 30)
-  				labelStatus.pos 				= [10,(uiMainRollout.height - 15)]
-			)
+			-- Skinning event handers
+				on btnSkinCheck 				pressed do ( fnSkinCheck () )
+				on btnSkinSelect 				pressed do ( fnSkinSelect () )
+				on btnSkinSafeMods 				pressed do ( fnSkinSafeMods () )
+				on btnSkinSafeModsSelect		pressed do ( fnSkinSafeModsSelect() )
+				on btnSkinDeformReset 			pressed do ( fnSkinDeformReset() )
+				on btnSkinPivotReset 			pressed do ( fnSkinPivotReset() )
+				on btnSkinwrapStealDo 			pressed do ( fnSkinwrapStealDo() )
+				on btnSkinParent 				pressed do ( fnSkinParent() )
+				on btnMeshClean					pressed do ( fnMeshClean() )
+				on btnSkinProxyDo				pressed do ( fnSkinProxyDo() )
 
 			-- Naming event handlers
-			on btnNameDupeCheck 	pressed do ( fnNameDupeCheck() )
-			on btnNameDupeSelect 	pressed do ( fnNameDupeSelect() )
-			on btnNameAutoCheck 	pressed do ( fnNameAutoCheck() )
-			on btnNameAutoApply 	pressed do ( fnNameAutoApply() )
-			on btnNamePrefixCheck 	pressed do ( fnNamePrefixCheck() )
-			on btnNamePrefixSelect 	pressed do ( fnNamePrefixDo "select" )
-			on btnNamePrefixApply 	pressed do ( fnNamePrefixDo "apply" )
-			on btnNameUPCheck		pressed do ( fnNameUPCheck() )
-			on btnNameUPGet			pressed do ( fnNameUPGet() )
-			on btnNameUPSet			pressed do ( fnNameUPSet() )
+				on btnNameDupeCheck 			pressed do ( fnNameDupeCheck() )
+				on btnNameDupeSelect 			pressed do ( fnNameDupeSelect() )
+				on btnNameAutoCheck 			pressed do ( fnNameAutoCheck() )
+				on btnNameAutoApply 			pressed do ( fnNameAutoApply() )
+				on btnNamePrefixCheck 			pressed do ( fnNamePrefixCheck() )
+				on btnNamePrefixSelect 			pressed do ( fnNamePrefixDo "select" )
+				on btnNamePrefixApply 			pressed do ( fnNamePrefixDo "apply" )
+				on btnNameUPCheck				pressed do ( fnNameUPCheck() )
+				on btnNameUPGet					pressed do ( fnNameUPGet() )
+				on btnNameUPSet					pressed do ( fnNameUPSet() )
 
 			-- UserProps event handlers
-			on btnUserPropsGetAll 			pressed do ()
-			on btnUserPropsSetAll 			pressed do ()
-			on btnUserPropsNameCheck		pressed do ()
-			on btnUserPropsNameGet 			pressed do ()
-			on btnUserPropsNameSet 			pressed do ()
-			on btnUserPropsParentCheck 		pressed do ()
-			on btnUserPropsParentGet 		pressed do ()
-			on btnUserPropsParentSet 		pressed do ()
-			on btnUserPropsWirecolorCheck 	pressed do ()
-			on btnUserPropsWirecolorGet 	pressed do ()
-			on btnUserPropsWirecolorSet 	pressed do ()
-			on btnUserPropsDateGet 			pressed do ()
-			on btnUserPropsDateSet 			pressed do ()
+				on btnUserPropsGetAll 			pressed do ( fnUserPropsGetAll() )
+				on btnUserPropsSetAll 			pressed do ( fnUserPropsSetAll() )
+				on btnUserPropsNameCheck		pressed do ( fnUserPropsNameCheck() )
+				on btnUserPropsNameGet 			pressed do ( fnUserPropsNameGet() )
+				on btnUserPropsNameSet 			pressed do ( fnUserPropsNameSet() )
+				on btnUserPropsParentCheck 		pressed do ( fnUserPropsParentCheck() )
+				on btnUserPropsParentGet 		pressed do ( fnUserPropsParentGet() )
+				on btnUserPropsParentSet 		pressed do ( fnUserPropsParentSet() )
+				on btnUserPropsWirecolorCheck 	pressed do ( fnUserPropsWirecolorCheck() )
+				on btnUserPropsWirecolorGet 	pressed do ( fnUserPropsWirecolorGet() )
+				on btnUserPropsWirecolorSet 	pressed do ( fnUserPropsWirecolorSet() )
+				on btnUserPropsDateGet 			pressed do ( fnUserPropsDateGet() )
+				on btnUserPropsDateSet 			pressed do ( fnUserPropsDateSet() )
+
+			-- UI Event Handlers
+				-- Initalize the interface when it opens, mostly storing UI items for visibility operations later
+				on uiMainRollout open do
+				(
+					-- Shorten some names
+					rbi 	= rigBuddy.interfaces
+					rbuimi 	= rigBuddy.uiMainItems
+	
+					-- Store each of the ui items into their appropriate class
+					curLi = rigBuddy.uiMainItems.uiBaking
+					append curLi labBaking
+					append curLi labBakePC
+					append curLi btnBakePCCheck
+					append curLi btnBakePCSelect
+					append curLi btnBakePCAdd
+					append curLi btnBakePCSwapSkin
+					append curLi labBakeTFB
+					append curLi labBakePCB
+					append curLi labBakeBNS
+					
+					curLi = rigBuddy.uiMainItems.uiMeshes 
+					append curLi labMeshes
+	
+					curLi = rigBuddy.uiMainItems.uiSkinning
+					append curLi labSkinning
+					append curLi labSkinModChecks		
+					append curLi btnSkinCheck 			
+					append curLi btnSkinSelect 			
+					append curLi btnSkinSafeMods 		
+					append curLi btnSkinSafeModsSelect 	
+					append curLi labSkinModOp			
+					append curLi btnSkinDeformReset 		
+					append curLi btnSkinPivotReset 		
+					append curLi labSkinBinding			
+					append curLi btnSkinwrapStealDo 		
+					append curLi btnSkinParent 			
+					append curLi labSkinProxy
+					append curLi labMeshClean
+					append curLi btnMeshClean		
+					append curLi btnSkinProxyDo			
+			 		append curLi spnPolycount 			
+	
+					curLi = rigBuddy.uiMainItems.uiRigging 		
+					append curLi labRigging
+					append curLi labRigScale		
+					append curLi btnRigScaleCheck 
+					append curLi btnRigScaleSelect 
+					append curLi labRigHeirarchy	
+					append curLi btnRigHeirReparent 
+					append curLi labRigHelpers	
+					append curLi btnRigHelperHypot 
+					append curLi btnRigHelperRay 
+	
+					curLi = rigBuddy.uiMainItems.uiNaming
+					append curLi labNaming 		
+					append curLi btnNameDupeCheck
+					append curLi btnNameDupeSelect
+					append curLi btnNameAutoCheck
+					append curLi btnNameAutoApply
+					append curLi btnNamePrefixCheck 
+					append curLi btnNamePrefixSelect
+					append curLi btnNamePrefixApply 
+					append curLi btnNameUPCheck
+					append curLi btnNameUPGet
+					append curLi btnNameUPSet
+	
+					curLi = rigBuddy.uiMainItems.uiUserProperties
+					append curLi labUserProps
+					append curLi btnUserPropsGetAll
+					append curLi btnUserPropsSetAll
+					append curLi btnUserPropsClearAll
+					append curLi labUserPropsName
+					append curLi btnUserPropsNameCheck
+					append curLi btnUserPropsNameGet
+					append curLi btnUserPropsNameSet
+					append curLi btnUserPropsNameClear
+					append curLi labUserPropsParent
+					append curLi btnUserPropsParentCheck
+					append curLi btnUserPropsParentGet
+					append curLi btnUserPropsParentSet
+					append curLi btnUserPropsParentClear
+					append curLi labUserPropsWirecolor
+					append curLi btnUserPropsWirecolorCheck
+					append curLi btnUserPropsWirecolorGet
+					append curLi btnUserPropsWirecolorSet
+					append curLi btnUserPropsWirecolorClear
+					append curLi labUserPropsDate
+					append curLi btnUserPropsDateGet
+					append curLi btnUserPropsDateSet
+					append curLi btnUserPropsDateClear
+	
+					-- Initialize the List View
+					rbi.lvSetproperties lvMain
+					rbi.lvSetColumns	lvMain #("","") #(20,475)
+	
+					labelStatus.text = "Status: Ready"
+	
+					-- TODO: Remove this stuff, because it is for debug mode
+					-- Initialize the toolset to the default mode
+					-- rigBuddy.interfaces.uiMainMode "Skinning"
+					-- rigBuddy.interfaces.uiMainMode "User Properties"
+					--rigBuddy.interfaces.uiMainMode "Baking"
+					rigBuddy.interfaces.uiMainMode "Rigging"
+				)
+	
+	 			-- Modify the UI items positions, when the window is resized
+				on uiMainRollout resized arg do
+				(
+					if uiMainRollout.height < 120 then(uiMainRollout.height = 120)else()
+					if uiMainRollout.height > 1000 then(uiMainRollout.height = 1000)else()
+	
+	 				progBar1.pos 					= [5,(uiMainRollout.height - 30 )]					
+	 				progBar2.pos 					= [5,(uiMainRollout.height - 25 )]		
+					uiMainRollout.lvMain.height 	= (uiMainRollout.height - 35)
+	  				labelStatus.pos 				= [10,(uiMainRollout.height - 15)]
+				)
 		)
 
 		-- Construct the Main UI Rollout and return it
@@ -601,7 +827,8 @@ struct rbInterfacesStruct
 		
 		-- Set some things for the UI
 		--SetDialogPos uiMainRollout [500,300]
-		uiMainRollout.height = 400
+		uiMainRollout.height = 250
+		--uiMainRollout.height = 400
 		SetDialogPos uiMainRollout [1000,150]
 		-- SetDialogPos uiMainRollout [1337,2080]
 
