@@ -25,15 +25,65 @@ function rbLibInit  = (
 ----------------------------
 
 		-- Adds a point cache modifier above the skin
-		function pointCacheAddAboveSkin =
+		function pointCacheAddAboveSkin arg_list arg_mode = -- " Mode: above / replace "
 		(
-			print"pointCacheAddAboveSkin Function"
+			for node in arg_list do 
+			(
+				for i in 1 to node.modifiers.count do
+				(
+					curTest = (classof node.modifiers[i])
+
+					if curTest == Skin then
+					(
+						-- Add a point cache
+						newCache = pointCache()
+						addmodifier node newCache before:(i-1) -- Apply to the right place in the stack
+
+						if arg_mode == "replace" then 
+						(
+							deleteModifier node (i+1)
+						)
+					)
+				)
+			)
 		),
 
 		-- Checks if there is a point cache modifier in the current objects stack
-		function pointCacheTestSelection =
+		function pointCacheTestSelection arg_list =
 		(
-			print"pointCacheTestSelection Function"
+			struct report 
+			(
+				passList = #(),
+				failList = #()
+			)
+
+			newReport = report()
+
+			-- reduce selection to geometry only
+			geoOnly = collect3dLib.collectByClass arg_list GeometryClass
+
+			for node in geoOnly do 
+			(
+				-- set a flag for if any point cache modifiers are found
+				fail = true 
+
+				for i in 1 to node.modifiers.count do
+				(
+					curTest = ( classof node.modifiers[i] )
+
+					if curTest == Point_Cache then
+					(
+						-- if a point cache modifier was found, add the object to the pass list
+						append newReport.passList ( getHandleByAnim node )
+						fail = false
+					)
+				)
+
+				-- if no point cache modifier was found, then add it to the fail list
+				if fail then (append newReport.failList ( getHandleByAnim node ))
+			)
+
+			return newReport
 		),
 
 		-- Converts all skin modifiers to point caches - useful for making the render version of an asset.
@@ -366,13 +416,21 @@ function rbLibInit  = (
 			-- Remove boneGeometry from the list
 			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
 			newMeshes = #()
+			curFloat = 0.000
 
 			for mesh in meshes do 
 			(
+
+				curFloat += 1.000
+
 				-- Store some properties to restore later
 				holdWire 	= mesh.wirecolor
 				holdName 	= mesh.name
 				holdParent 	= mesh.parent
+				holdLayer 	= mesh.layer
+
+				-- Try to update the UI if it exists
+				try(rigBuddy.uiMain.labelStatus.text = ( "Cleaning mesh: " + holdName )	)catch()
 
 				-- Create a new plane to serve as donor object
 				newPlane = plane()
@@ -395,11 +453,15 @@ function rbLibInit  = (
 				-- Restore previously stored properties
 				polyMesh1.wirecolor = holdWire 	
 				polyMesh1.name = holdName 	
-				polyMesh1.parent = holdParent 	
+				polyMesh1.parent = holdParent
+				holdLayer.addnode polyMesh1
 
 
 				-- Add the new mesh to the list of new meshes
 				append newMeshes polyMesh1
+
+				-- Try to communicate with the UI, if it exists
+				try(rigBuddy.uiMain.progBar1.value = ( ( curFloat / meshes.count ) * 100 ) )catch()
 			)
 
 			return newMeshes
@@ -455,30 +517,38 @@ function rbLibInit  = (
 
 			newReport 	= report()
 
+			allNodes = #()
+
+			for arg in arg_list do 
+			(
+				newNodes = ( collect3dLib.collectAllChildren arg )
+				join allNodes newNodes
+			)
+
 			-- Loop through all the objects
-			for arg in arg_list do
+			for node in allNodes do
 			(
 				-- Floating point error that is acceptable to be within.
 				epsilon = 0.001
 
 				-- True condition for if all scale dimensions are equal to 1, within error
-				if ( math3dLib.withinEpsilon arg.scale[1] 1.0000 epsilon ) and ( math3dLib.withinEpsilon arg.scale[2] 1.0000 epsilon ) and ( math3dLib.withinEpsilon arg.scale[3] 1.0000 epsilon ) then 
+				if ( math3dLib.withinEpsilon node.scale[1] 1.0000 epsilon ) and ( math3dLib.withinEpsilon node.scale[2] 1.0000 epsilon ) and ( math3dLib.withinEpsilon node.scale[3] 1.0000 epsilon ) then 
 				(
-					append newReport.nonScaled ( gethandlebyanim arg )
+					append newReport.nonScaled ( gethandlebyanim node )
 				)
 				else
 				(
 					newReport.pass = false
 
 					-- True condition for if all scale dimensions are equal to eachother, within error
-					if ( math3dLib.withinEpsilon arg.scale[1] arg.scale[2] epsilon ) and ( math3dLib.withinEpsilon arg.scale[1] arg.scale[3] epsilon ) then 
+					if ( math3dLib.withinEpsilon node.scale[1] node.scale[2] epsilon ) and ( math3dLib.withinEpsilon node.scale[1] node.scale[3] epsilon ) then 
 					(
-						append newReport.uniformScaled ( gethandlebyanim arg )
+						append newReport.uniformScaled ( gethandlebyanim node )
 					)
 					
 					else 
 					(
-						append newReport.nonUniformScaled ( gethandlebyanim arg )
+						append newReport.nonUniformScaled ( gethandlebyanim node )
 					)
 				)
 			)
@@ -492,6 +562,7 @@ function rbLibInit  = (
 		function parentNodesToProtoplast arg_list =
 		(
 			parentActions = #()
+			actionsTaken = 0
 
 			struct heirarchyOperationStr 
 			(
@@ -515,12 +586,87 @@ function rbLibInit  = (
 			for action in parentActions do 
 			(
 				-- Do the parent 
-				action.node.parent = action.parentNode[1]
+				--action.node.parent = action.parentNode[1]
+				if action.node != action.parentNode[1] then 
+				(
+					action.node.parent = action.parentNode[1]
+					actionsTaken += 1
+				)
+				--print ( action.node.parent.name + " -> " + action.parentNode[1].name )
+				--print action
 			)
+
+			return actionsTaken
 		),
 
 		function createRay arg_list =
 		(
+
+			struct report
+			(
+				pass = false,
+				newRay = undefined
+			)
+
+			newReport = report()
+
+			if arg_list.count == 2 then 
+			(
+				newReport.pass = true 
+			)
+
+			if newReport.pass then 
+			(
+
+				-- Disable the 3dsMax from updating in windows
+				WM_SETREDRAW 	= 11
+				MAX_HWND 		= windows.getMaxHWND()
+				windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
+	
+				-- Store selections, and command panel mode
+				--sel 	= selection as array
+				mode 	= getCommandPanelTaskMode()
+
+				curTime 	= sliderTime
+				slidertime 	= animationrange.start 
+				
+				max modify mode
+								
+				p1 = arg_list[1]
+				p2 = arg_list[2]
+
+				p1t = p1.pos
+				p2t = p2.pos
+
+				newRayName = ("RAY_"+p1.name+"-to-"+p2.name)
+
+				newRay = line pos:p1t name:newRayName wirecolor:red render_renderable:off render_displayRenderMesh:false
+				addNewSpline newRay
+				addKnot newRay 1 #corner #line p1t
+				addKnot newRay 1 #corner #line p2t
+				updateShape newRay
+
+				newRay.parent = p1
+				newReport.newRay = newRay
+
+				modPanel.setCurrentObject newRay.baseObject
+				modPanel.addModToSelection (Skin ()) ui:on
+				skinOps.addBone newRay.modifiers[#Skin] p1 1
+				skinOps.addBone newRay.modifiers[#Skin] p2 1
+				newRay.modifiers[#Skin].cross_radius = 1
+					
+				sliderTime = curtime 
+
+				select arg_list
+
+				-- Restore the selection, command panel to previous state
+				setCommandPanelTaskMode mode:mode
+	
+				-- Enable 3dsMax to update in windows
+				windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+			)
+
+			return newReport
 		),
 
 --- Name Functions ---
@@ -930,6 +1076,7 @@ function rbLibInit  = (
 			newReport.currentVal = rbLib.collectNodeName arg_node
 			newReport.storedVal = rbLib.getUserPropsNodeName arg_node
 			newReport.id = ( getAnimByHandle arg_node )
+			--newReport.id = ( getHandleByAnim arg_node )
 
 			if newReport.currentVal == newReport.storedVal then
 			(

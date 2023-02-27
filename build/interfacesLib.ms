@@ -26,11 +26,39 @@ struct rbInterfacesStruct
 		)
 	),
 
+	function uiMainModeReset =
+	(
+		try(
+		-- Items that are disabled, until a check is run. They go in this list to be re-disabled when modes are changed
+		allItemsDisabled 	= #(
+			RigBuddy.uiMain.btnRigScaleSelect,
+			RigBuddy.uiMain.btnBakePCSelect,
+			RigBuddy.uiMain.btnSkinSelect,
+			RigBuddy.uiMain.btnSkinSafeModsSelect,
+			RigBuddy.uiMain.btnNameDupeSelect,
+			RigBuddy.uiMain.btnNameAutoApply,
+			RigBuddy.uiMain.btnNamePrefixSelect,
+			RigBuddy.uiMain.btnNamePrefixApply
+		)
+
+		-- Disable all interface items that should default to disabled
+		for item in allItemsDisabled do ( try( item.enabled = false )catch() )
+
+		-- Clear list view
+		rbi 	= rigBuddy.interfaces
+		try( rbi.lvSetColumns	rigBuddy.uiMain.LVMain #("","") #(20,550) )catch()
+		--try(rigBuddy.uiMain.LVMain.clear())catch()
+
+		)catch()
+	),
+
 	function uiMainMode arg_mode =
 	(
 		
-		rbuimi 		= rigBuddy.uiMainItems 	-- Shorten the var
-		allItems 	= #()					-- start with a clean list
+		rbuimi 				= rigBuddy.uiMainItems 	-- Shorten the var
+		allItems 			= #()					-- start with a clean list
+		
+		rigBuddy.interfaces.uiMainModeReset()
 
 		-- collect all the types of ui items and put them in the list
 		join allItems rbuimi.uiMeshes 	
@@ -39,6 +67,7 @@ struct rbInterfacesStruct
 		join allItems rbuimi.uiRigging 		
 		join allItems rbuimi.uiNaming 		
 		join allItems rbuimi.uiUserProperties
+
 
 		-- Turn off all items
 		for item in allItems do (try ( item.visible = false)catch())
@@ -74,7 +103,6 @@ struct rbInterfacesStruct
 			for item in rbuimi.uiUserProperties 	do ( try( item.visible = true )catch() )
 			try( rigBuddy.uiMain.height = 350 )catch() -- inside try catch, because UI cannot be set before its first running
 		)
-
 	),
 
 	-- Function to create the main ui object
@@ -139,22 +167,22 @@ struct rbInterfacesStruct
 
 			label 			labRigging					"Rigging:"														pos:[10,10]	
 				label 			labRigScale				"Transforms:"													pos:[24,30]
-				button 			btnRigScaleCheck 		"Check selection scaled transforms"								pos:[24,45] width:300
-				button 			btnRigScaleSelect 		"Select"														pos:[325,45] width:85 enabled:false
+				button 			btnRigScaleCheck 		"Check selection and all children for scaled transforms"		pos:[24,45] width:300
+				button 			btnRigScaleSelect 		"Select Scaled"														pos:[325,45] width:85 enabled:false
 
 				label 			labRigHeirarchy			"Heirarchiy:"													pos:[24,70]
-				button 			btnRigHeirReparent 		"Reparent all nodes to their global"							pos:[24,85] width:390
+				button 			btnRigHeirReparent 		"Reparent selection to its global ( no intermediate nodes )"	pos:[24,85] width:390
 
 				label 			labRigHelpers			"Helpers:"														pos:[24,110]
 				button 			btnRigHelperHypot 		"Create hypotenuse point"										pos:[24,125] width:390
-				button 			btnRigHelperRay 		"Create bound ray between 2 objects  ( feature pending )"		pos:[24,147] width:390 enabled:false
+				button 			btnRigHelperRay 		"Create bound ray between 2 objects"		pos:[24,147] width:390 --enabled:false
 
 			label 			labBaking					"Baking Tools"													pos:[10,10]	align:#left	
 				label 			labBakePC				"Point Cache modifier:"											pos:[24,30]
 				button 			btnBakePCCheck 			"Check selection for Point Cache modifiers"						pos:[24,45] width:300
 				button 			btnBakePCSelect 		"Select"														pos:[325,45] width:85 enabled:false
-				button 			btnBakePCAdd 			"Add point cache modifier above skin"							pos:[24,70] width:385
-				button 			btnBakePCSwapSkin		"Convert skin modifiers to Point Cache modifiers in selection"	pos:[24,95] width:385
+				button 			btnBakePCAdd 			"Add PointCaches above Skins"									pos:[24,68] width:191 -- "Add point cache modifier above skin"
+				button 			btnBakePCSwapSkin		"Replace Skins with PointCaches"								pos:[217,68] width:193 -- "Convert skin modifiers to Point Cache modifiers"
 				label 			labBakeTFB				"Transform Baker: ( feature pending )"							pos:[24,125] enabled:false
 				label 			labBakePCB				"Point Cache Batch: ( feature pending )"						pos:[24,145] enabled:false
 				label 			labBakeBNS				"Bake N Save: ( feature pending )"								pos:[24,165] enabled:false
@@ -170,12 +198,12 @@ struct rbInterfacesStruct
 				button 			btnSkinSafeModsSelect 	"Select"														pos:[325,67] width:85 enabled:false
 
 				label 			labSkinModOp			"Skin modifier operations:"										pos:[24,95]
-				button 			btnSkinDeformReset 		"Skin Deformmations Reset"										pos:[24,110] width:385
-				button 			btnSkinPivotReset 		"Set pivot of skinned mesh to origin, preserving offset"		pos:[24,132] width:385
+				button 			btnSkinDeformReset 		"Skin Deformmations Reset **"				pos:[24,110] width:385 enabled:false
+				button 			btnSkinPivotReset 		"Set pivot of skinned mesh to origin, preserving offset **"		pos:[24,132] width:385 enabled:false
 
 				label 			labSkinBinding			"Skin weights and binding:"										pos:[24,160]
-				button 			btnSkinwrapStealDo 		"Skin using Skin Wrap - ( last selected will recive the skin )" pos:[24,175] width:385
-				button 			btnSkinParent 			"Skin Parent - ( last selected will be the parent )"  			pos:[24,197] width:385
+				button 			btnSkinwrapStealDo 		"Skin using Skin Wrap - ( last selected will recive the skin ) **" pos:[24,175] width:385 enabled:false
+				button 			btnSkinParent 			"Skin Parent - ( last selected will be the parent ) **"  			pos:[24,197] width:385 enabled:false
 
 				label 			labMeshClean			"Mesh Prep: "													pos:[24,225] 			
 				button 			btnMeshClean			"Collapse and reset mesh "										pos:[24,240] width:385
@@ -232,94 +260,408 @@ struct rbInterfacesStruct
 			-- Rigging Functions
 				function fnRigScaleCheck =
 				(
-					print "fnRigScaleCheck"
-
 					reports = #()
-					selarr 	= selection as array 
+					selArr 	= ( selection as array  )
+					collectedItems = #()
 	
-					-- For each item in selection, examine it
-					for sel in selarr do 
+					-- Check for objects with scaled transforms	
+					newReport = ( rigBuddy.lib.checkForScaledTransforms selArr )
+	
+					-- Store the data for use elswhere
+					rigBuddy.report = newReport
+
+					-- Set the list view
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Scaled","Scaling","Animhandle","Name") #(22,50,80,70,348)	
+					rows = #()
+
+					-- TODO: Add handling around duplicate selections
+
+					-- Add items to the UI for uniform scaled objects
+					if newReport.pass == false then 
 					(
-						newReport = rigBuddy.lib.checkForScaledTransforms sel
-						append reports newReport
+
+						for node in newReport.uniformScaled do 
+						(
+							-- Make a new List view Item
+							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+							li.UseItemStyleForSubItems = false					
+							li.subitems.add ( "True" )
+							li.subitems.add ( "Uniform" )
+							li.subitems.add ( node as string )
+							curNode = ( getAnimByHandle node )
+							li.subitems.add ( curNode.name  )
+							append rows li
+						)
+
+						-- Add items to the UI for non-uniform scaled objects
+						for node in newReport.nonUniformScaled do 
+						(
+							-- Make a new List view Item
+							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+							li.UseItemStyleForSubItems = false					
+							li.subitems.add ( "True" )
+							li.subitems.add ( "Non-Uniform" )
+							li.subitems.add ( node as string )
+							curNode = ( getAnimByHandle node )
+							li.subitems.add ( curNode.name  )
+							append rows li
+						)
+
+						-- turn on the select button
+						btnRigScaleSelect.enabled = true
 					)
 	
-					print reports
-
-					rbi = rigBuddy.interfaces
-					rbi.lvSetColumns	lvMain #("","Scaled","Animhandle","Scaling") #(22,60,250,250)	
-					rows = #()
---	
---					for report in reports do 
---					(
---						-- Make a new List view Item
---						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
---						li.UseItemStyleForSubItems = false					
---						li.subitems.add ( report.pass as string )
---						li.subitems.add ( report.currentVal )
---						li.subitems.add ( report.storedVal )
---	
---						append rows li
---					)
---	
---					-- Add the rows
---					lvMain.items.addRange rows
---	
---					rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " names compared")					
+					-- Add the rows
+					lvMain.items.addRange rows
+	
+					-- report to the log
+					rigBuddy.uiMain.labelStatus.text = ( ( rows.count as string ) + " scaled objects found")					
 				)
 				
 				function fnRigScaleSelect =
 				(
-					print "fnRigScaleSelect"
+					toSelect = #()
+
+					-- collect the uniform scaled
+					for node in rigBuddy.report.uniformScaled do 
+					(
+						curNode = getAnimByHandle node 
+						append toSelect curNode
+					)
+
+					-- collect the non uniform scaled
+					for node in rigBuddy.report.nonUniformScaled do 
+					(
+						curNode = getAnimByHandle node 
+						append toSelect curNode
+					)
+
+					select toSelect
+					rigBuddy.uiMain.labelStatus.text = ( ( toSelect.count as string ) + " objects selected")
 				)
 				
 				function fnRigHeirReparent =
 				(
-					print "fnRigHeirReparent"
+					-- print "fnRigHeirReparent"
+					
+					report = rigBuddy.lib.parentNodesToProtoplast ( selection as array )
+					print report
+					rigBuddy.report = report
+					--print report
+					rigBuddy.uiMain.labelStatus.text = ( ( report as string ) + " objects parented")
 				)
 				
 				function fnRigHelperHypot =
 				(
-					print "fnRigHelperHypot"
+					selArr = ( selection as array )
+					result = rigBuddy.lib.hypotenusePoint selArr 
+
+					if result.pass then 
+					(
+						select result.hypotPoint
+						rigBuddy.uiMain.labelStatus.text = ( result.hypotPoint.name + ( " Created, and selected" ) )
+					)
+					else
+					(
+						rigBuddy.uiMain.labelStatus.text = ( "You must select exactly 3 objects")
+					)
 				)
 				
 				function fnRigHelperRay =
 				(
-					print "fnRigHelperRay"
+					selArr = ( selection as array )
+					result = rigBuddy.lib.createRay selArr 
+
+					if result.pass then 
+					(
+						rigBuddy.uiMain.labelStatus.text = ( "Ray " + ( result.newRay.name ) + " created")
+					)
+					else
+					(
+						rigBuddy.uiMain.labelStatus.text = ( "You must select exactly 2 objects")	
+					)
 				)
 
 			-- Baking Functions
 				function fnBakePCCheck = 
 				(
+					selArr = ( selection as array )
+					rigBuddy.report = rigBuddy.lib.pointCacheTestSelection selArr
+
+					-- Set the list view
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Modifier present","Animhandle","Name") #(22,100,80,400)	
+					rows = #()
+
+					if rigBuddy.report.failList.count == 0 then 
+					(
+						rigBuddy.uiMain.labelStatus.text = ( "All geometry objects have a valid point cache modifer" )	
+					)
+					else 
+					(
+
+						for node in rigBuddy.report.failList do
+						(
+							print node
+							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+							li.UseItemStyleForSubItems = false					
+							li.subitems.add ( "False" )
+							li.subitems.add ( node as string )
+							curNode = ( getAnimByHandle node )
+							li.subitems.add ( curNode.name  )
+							append rows li
+						)
+
+						-- Add the rows
+						lvMain.items.addRange rows
+
+						-- Update the log
+						rigBuddy.uiMain.labelStatus.text = ( ( rigBuddy.report.failList.count as string ) + " geometry objects found without a point cache modifier" )	
+
+						-- Enable the select button
+						btnBakePCSelect.enabled = true
+					)
 				)
 
 				function fnBakePCSelect = 
 				(
+					newSelection = #()
+					
+					for node in rigBuddy.report.failList do ( append newSelection ( getAnimByHandle node ) )
+
+					select newSelection
 				)
 
 				function fnBakePCAdd = 
 				(
+					selArr = ( selection as array )
+					rigBuddy.lib.pointCacheAddAboveSkin selArr "above"
 				)
 
 				function fnBakePCSwapSkin = 
 				(
+					selArr = ( selection as array )
+					rigBuddy.lib.pointCacheAddAboveSkin selArr "replace"
 				)
 
 			-- Skinning Functions
 				function fnSkinCheck =
 				(
+					selArr = ( selection as array )
+					rigBuddy.report = rigBuddy.lib.skinCheck selArr
+
+					-- Set the list view
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Modifier present","Animhandle","Name") #(22,100,80,400)	
+					rows = #()		
+
+					for node in rigBuddy.report.noSkin do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "False" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					-- Add the rows
+					lvMain.items.addRange rows
+
+					btnSkinSelect.enabled = true
+
+					rigBuddy.uiMain.labelStatus.text = ( rigBuddy.report.noSkin.count as string + " geometry objects found without a skin modifier" )	
 				)
 
 				function fnSkinSelect =
 				(
+					selectList = #()
+
+					for node in rigBuddy.report.noSkin do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					select selectList
+					rigBuddy.uiMain.labelStatus.text = ( rigBuddy.report.noSkin.count as string + " objects selected" )	
 				)
 
 				function fnSkinSafeMods =
 				(
+					selArr = ( selection as array )
+					rigBuddy.report = rigBuddy.lib.skinCheckSafeMods selArr
+
+					-- print rigBuddy.report
+
+					-- Set the list view
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Modifier present","Animhandle","Name") #(22,100,80,400)	
+					rows = #()		
+
+					for node in rigBuddy.report.fail_turbosmooth do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "Turbosmooth" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_meshsmooth do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "Meshsmooth" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_OpenSubdiv do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "OpenSubdiv" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_subdivide do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "Subdivide" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_Shell do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "Shell" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_RetopologyComponent do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "RetopologyComponent" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_ProOptimizer do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "ProOptimizer" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_optimize do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "Optimize" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					for node in rigBuddy.report.fail_Vertex_Weld do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "Vertex_Weld" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					-- Add the rows
+					lvMain.items.addRange rows
+					btnSkinSafeModsSelect.enabled = true
+
+					rigBuddy.uiMain.labelStatus.text = ( rows.count as string + " unsafe modifiers found below skin modifiers" )	
 				)
 
 				function fnSkinSafeModsSelect =
 				(
+
+					selectList = #()
+
+					for node in rigBuddy.report.fail_turbosmooth do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_meshsmooth do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_OpenSubdiv do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_subdivide do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_Shell do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_RetopologyComponent do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_ProOptimizer do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_optimize do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					for node in rigBuddy.report.fail_Vertex_Weld do
+					(
+						append selectList ( getAnimByHandle node )
+					)
+
+					-- make the list only unique items
+					uniqueSelectList = makeUniqueArray selectList 
+					select uniqueSelectList
+
+					-- Report to the logger
+					rigBuddy.uiMain.labelStatus.text = ( uniqueSelectList.count as string + " objects selected" )	
 				)
 
 				function fnSkinDeformReset =
@@ -328,6 +670,9 @@ struct rbInterfacesStruct
 
 				function fnSkinPivotReset =
 				(
+					--TODO: Left off here
+					selArr = ( selection as array )
+					rigBuddy.report = rigBuddy.lib.skinPivotReset selArr
 				)
 
 				function fnSkinwrapStealDo =
@@ -340,6 +685,12 @@ struct rbInterfacesStruct
 
 				function fnMeshClean =
 				(
+					selArr = ( selection as array )
+					rigBuddy.report = rigBuddy.lib.meshCollapseAndReset selArr
+
+					select rigBuddy.report
+					
+					rigBuddy.uiMain.labelStatus.text = ( ( rigBuddy.report.count as string ) + " meshes cleaned" )
 				)
 
 				function fnSkinProxyDo =
@@ -653,56 +1004,56 @@ struct rbInterfacesStruct
 				)
 
 			-- Rigging event handlers
-				on btnRigScaleCheck 			pressed do ( fnRigScaleCheck() )
-				on btnRigScaleSelect 			pressed do ( fnRigScaleSelect() )
-				on btnRigHeirReparent 			pressed do ( fnRigHeirReparent() )
-				on btnRigHelperHypot 			pressed do ( fnRigHelperHypot() )
-				on btnRigHelperRay 				pressed do ( fnRigHelperRay() )
+				on btnRigScaleCheck 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnRigScaleCheck() )
+				on btnRigScaleSelect 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnRigScaleSelect() ) )
+				on btnRigHeirReparent 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnRigHeirReparent() ) )
+				on btnRigHelperHypot 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnRigHelperHypot() ) )
+				on btnRigHelperRay 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnRigHelperRay() ) )
 
 			-- Baking event handlers
-				on btnBakePCCheck 				pressed do ( fnBakePCCheck() )
-				on btnBakePCSelect 				pressed do ( fnBakePCSelect() )
-				on btnBakePCAdd 				pressed do ( fnBakePCAdd() )
-				on btnBakePCSwapSkin			pressed do ( fnBakePCSwapSkin() )
+				on btnBakePCCheck 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnBakePCCheck() )
+				on btnBakePCSelect 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnBakePCSelect() ) )
+				on btnBakePCAdd 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnBakePCAdd() ) )
+				on btnBakePCSwapSkin			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnBakePCSwapSkin() ) )
 
 			-- Skinning event handers
-				on btnSkinCheck 				pressed do ( fnSkinCheck () )
-				on btnSkinSelect 				pressed do ( fnSkinSelect () )
-				on btnSkinSafeMods 				pressed do ( fnSkinSafeMods () )
-				on btnSkinSafeModsSelect		pressed do ( fnSkinSafeModsSelect() )
-				on btnSkinDeformReset 			pressed do ( fnSkinDeformReset() )
-				on btnSkinPivotReset 			pressed do ( fnSkinPivotReset() )
-				on btnSkinwrapStealDo 			pressed do ( fnSkinwrapStealDo() )
-				on btnSkinParent 				pressed do ( fnSkinParent() )
-				on btnMeshClean					pressed do ( fnMeshClean() )
-				on btnSkinProxyDo				pressed do ( fnSkinProxyDo() )
+				on btnSkinCheck 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnSkinCheck () )
+				on btnSkinSelect 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnSkinSelect () ) )
+				on btnSkinSafeMods 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnSkinSafeMods () )
+				on btnSkinSafeModsSelect		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnSkinSafeModsSelect() ) )
+				on btnSkinDeformReset 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnSkinDeformReset() ) )
+				on btnSkinPivotReset 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnSkinPivotReset() ) )
+				on btnSkinwrapStealDo 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnSkinwrapStealDo() ) )
+				on btnSkinParent 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnSkinParent() ) )
+				on btnMeshClean					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnMeshClean() ) )
+				on btnSkinProxyDo				pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnSkinProxyDo() )
 
 			-- Naming event handlers
-				on btnNameDupeCheck 			pressed do ( fnNameDupeCheck() )
-				on btnNameDupeSelect 			pressed do ( fnNameDupeSelect() )
-				on btnNameAutoCheck 			pressed do ( fnNameAutoCheck() )
-				on btnNameAutoApply 			pressed do ( fnNameAutoApply() )
-				on btnNamePrefixCheck 			pressed do ( fnNamePrefixCheck() )
-				on btnNamePrefixSelect 			pressed do ( fnNamePrefixDo "select" )
-				on btnNamePrefixApply 			pressed do ( fnNamePrefixDo "apply" )
-				on btnNameUPCheck				pressed do ( fnNameUPCheck() )
-				on btnNameUPGet					pressed do ( fnNameUPGet() )
-				on btnNameUPSet					pressed do ( fnNameUPSet() )
+				on btnNameDupeCheck 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnNameDupeCheck() )
+				on btnNameDupeSelect 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnNameDupeSelect() ) )
+				on btnNameAutoCheck 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnNameAutoCheck() )
+				on btnNameAutoApply 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnNameAutoApply() ) )
+				on btnNamePrefixCheck 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnNamePrefixCheck() )
+				on btnNamePrefixSelect 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnNamePrefixDo "select" ) )
+				on btnNamePrefixApply 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnNamePrefixDo "apply" ) )
+				on btnNameUPCheck				pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnNameUPCheck() )
+				on btnNameUPGet					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnNameUPGet() ) )
+				on btnNameUPSet					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnNameUPSet() ) )
 
 			-- UserProps event handlers
-				on btnUserPropsGetAll 			pressed do ( fnUserPropsGetAll() )
-				on btnUserPropsSetAll 			pressed do ( fnUserPropsSetAll() )
-				on btnUserPropsNameCheck		pressed do ( fnUserPropsNameCheck() )
-				on btnUserPropsNameGet 			pressed do ( fnUserPropsNameGet() )
-				on btnUserPropsNameSet 			pressed do ( fnUserPropsNameSet() )
-				on btnUserPropsParentCheck 		pressed do ( fnUserPropsParentCheck() )
-				on btnUserPropsParentGet 		pressed do ( fnUserPropsParentGet() )
-				on btnUserPropsParentSet 		pressed do ( fnUserPropsParentSet() )
-				on btnUserPropsWirecolorCheck 	pressed do ( fnUserPropsWirecolorCheck() )
-				on btnUserPropsWirecolorGet 	pressed do ( fnUserPropsWirecolorGet() )
-				on btnUserPropsWirecolorSet 	pressed do ( fnUserPropsWirecolorSet() )
-				on btnUserPropsDateGet 			pressed do ( fnUserPropsDateGet() )
-				on btnUserPropsDateSet 			pressed do ( fnUserPropsDateSet() )
+				on btnUserPropsGetAll 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsGetAll() ) )
+				on btnUserPropsSetAll 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsSetAll() ) )
+				on btnUserPropsNameCheck		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsNameCheck() )
+				on btnUserPropsNameGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameGet() ) )
+				on btnUserPropsNameSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameSet() ) )
+				on btnUserPropsParentCheck 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsParentCheck() )
+				on btnUserPropsParentGet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentGet() ) )
+				on btnUserPropsParentSet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentSet() ) )
+				on btnUserPropsWirecolorCheck 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsWirecolorCheck() )
+				on btnUserPropsWirecolorGet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorGet() ) )
+				on btnUserPropsWirecolorSet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorSet() ) )
+				on btnUserPropsDateGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateGet() ) )
+				on btnUserPropsDateSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateSet() ) )
 
 			-- UI Event Handlers
 				-- Initalize the interface when it opens, mostly storing UI items for visibility operations later
@@ -797,16 +1148,17 @@ struct rbInterfacesStruct
 	
 					-- Initialize the List View
 					rbi.lvSetproperties lvMain
-					rbi.lvSetColumns	lvMain #("","") #(20,475)
+					rbi.lvSetColumns	lvMain #("","") #(20,550)
 	
 					labelStatus.text = "Status: Ready"
+					rigBuddy.interfaces.uiMainModeReset()
 	
 					-- TODO: Remove this stuff, because it is for debug mode
 					-- Initialize the toolset to the default mode
-					-- rigBuddy.interfaces.uiMainMode "Skinning"
+					rigBuddy.interfaces.uiMainMode "Skinning"
 					-- rigBuddy.interfaces.uiMainMode "User Properties"
-					--rigBuddy.interfaces.uiMainMode "Baking"
-					rigBuddy.interfaces.uiMainMode "Rigging"
+					-- rigBuddy.interfaces.uiMainMode "Baking"
+					-- rigBuddy.interfaces.uiMainMode "Rigging"
 				)
 	
 	 			-- Modify the UI items positions, when the window is resized
@@ -827,8 +1179,8 @@ struct rbInterfacesStruct
 		
 		-- Set some things for the UI
 		--SetDialogPos uiMainRollout [500,300]
-		uiMainRollout.height = 250
-		--uiMainRollout.height = 400
+		--uiMainRollout.height = 250
+		uiMainRollout.height = 400
 		SetDialogPos uiMainRollout [1000,150]
 		-- SetDialogPos uiMainRollout [1337,2080]
 
