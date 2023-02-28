@@ -112,17 +112,135 @@ function rbLibInit  = (
 --- Skin Functions ---
 ----------------------
 
+		-- This is the most fragile and hokey thing I have ever made -Aaron Dabelow
 		-- Functionally collapses a skin modifier and replaces it, to make sure bind pose deformations are clean and match the unmodified skin pose of the rig
 		function skinDeformReset arg_list =
 		(
-			-- Collect only geometryclass objects
-			meshes = collect3dLib.collectByClass arg_list GeometryClass inclusive:true
-			-- Remove boneGeometry from the list
-			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
+			-- When turning off 3dsmax in windows, do it in a try block
+			try(
 
-			for node in meshes do 
+				--------- Disable the 3dsMax from updating in windows
+				WM_SETREDRAW 	= 11
+				MAX_HWND 		= windows.getMaxHWND()
+				windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
+
+				--------- Creates some locations and datas for use, and store the selection
+				reports = #()
+				tempDir = (getdir #temp)
+				tempSel = ( selection as array )
+				curFloat = 0.000
+
+				-------- Creates a callback that will call the getDialogHandle function when triggered
+				function dialog_ClickOK =
+				(
+					dialogHandle = dialogMonitorOps.getWindowHandle()
+					uiAccessor.pressButtonByName dialogHandle "OK"
+				)
+
+				-- Register the callbacks
+				dialogMonitorOps.interactive = false
+				dialogMonitorOps.unregisterNotification id:#test
+				dialogMonitorOps.registerNotification dialog_ClickOK id:#test
+				dialogMonitorOps.enabled = true
+
+				-- Collect only geometryclass objects
+				meshes = collect3dLib.collectByClass arg_list GeometryClass inclusive:true
+				-- Remove boneGeometry from the list
+				meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
+
+				--------- Loop through each of the passed objects
+				for node in meshes do 
+				(
+					try( rigBuddy.uiMain.labelStatus.text = ( "Working on: " + ( node.name as string ) ) )catch()
+
+					-- Report template
+					struct subReport
+					(
+						pass = false,
+						animhandle = undefined,
+						skinIndex = undefined
+					)
+					
+					newSubReport = subReport()
+					curFloat += 1.000 -- increment the progressbar float val
+
+					---- Find the skin modifier index
+					-- Look through each of the modifiers
+					for i in 1 to ( node.modifiers.count) do
+					(	
+						if newSubReport.pass == false then
+						(
+							curMod = node.modifiers[i]
+
+							if ( (classof curMod) == Skin )
+							then 
+							(
+								newSubReport.pass = true
+								newSubReport.skinIndex = i
+								newSubReport.animhandle = (getHandleByAnim node)
+							)
+						)
+					)
+
+					---- Add the subreport to the list of all reports
+					append reports newSubReport
+
+					-- If a skin was found, then go ahead with the reset
+					if newSubReport.pass then 
+					(
+						---- Duplicate the skin, paste it above
+						oldSkin = node.modifiers[newSubReport.skinIndex]
+						newSkin = ( copy oldSkin )
+
+						---- Save the weights of the old skin
+						modPanel.setCurrentObject oldSkin
+						subobjectLevel = 1
+						oldSkin.filter_vertices = on
+						max select all
+						skinOps.bakeSelectedVerts node.modifiers[#Skin]
+						skinOps.SaveEnvelope oldSkin ( tempDir + node.name +".env" )
+
+						-- Add a duplicate of the modifier
+						addModifier node newSkin before:(newSubReport.skinIndex - 1 )
+
+						---- Toggle the deformations on the new skin
+						newSkin.always_deform = false
+						newSkin.always_deform = true
+
+						---- Collapse stack from the point of the old skin
+						maxOps.CollapseNodeTo node ( newSubReport.skinIndex + 1 ) true
+
+						---- Toggle always deform to reset bind pose
+						modPanel.setCurrentObject newSkin
+						skinOps.LoadEnvelope newSkin (tempDir + node.name +".env")
+					)
+
+					-- Try to communicate with the UI, if it exists
+					try(rigBuddy.uiMain.progBar1.value = ( ( curFloat / meshes.count ) * 100 ) )catch()
+				)
+
+				------ Reset the selection
+				select tempSel
+
+				------ Disables the dialogops after it is done, removes the temporary files
+				dialogMonitorOps.enabled = false
+				cmdStr = ("rmdir " + tempDir + " /s /q")
+				DOSCommand cmdStr
+
+				--Enable 3dsMax to update in windows
+				windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+
+				return reports
+			)	
+			catch
 			(
+				--Enable 3dsMax to update in windows
+				windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
 
+				-- Turn the ok button clicker off as well
+				dialogMonitorOps.enabled = false
+
+				return reports
 			)
 		),
 
@@ -309,6 +427,11 @@ function rbLibInit  = (
 		function skinPivotReset arg_list =
 		(
 
+			-- Collect only geometryclass objects
+			meshes = collect3dLib.collectByClass arg_list GeometryClass inclusive:true
+			-- Remove boneGeometry from the list
+			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
+
 			struct report
 			(
 				pass 		= true,
@@ -318,44 +441,45 @@ function rbLibInit  = (
 			newReport 	= report()
 
 			-- For each item in the list
-			for arg in arg_list do
+			for mesh in meshes do
 			(
 				try
 				(
 					-- If the objects pivot does not = the origin, then
-					if arg.pivot != [0,0,0] then 
+					if mesh.pivot != [0,0,0] then 
 					(
-						mods = arg.modifiers
+						mods = mesh.modifiers
 						test = false
 						
 						-- Look through each of the modifiers
-						for j in 1 to mods.count do
+						for i in 1 to ( mesh.modifiers.count) do
 						(	
+					
+							curMod = mesh.modifiers[i]
+					
 							-- If the modifier is a skin modifier
-							if (classof mods[j]) == skin 
+							if (classof curMod) == skin 
 							then
 							(
-								-- Turn the modifier off, disable always deform
-								mods[j].enabled = false 
-								mods[j].always_deform = false
-
 								-- Reset the pivot
-								arg.pivot = [0,0,0]
-
-								-- Turn things back on
-								mods[j].always_deform = true
-								mods[j].enabled = true
-
+								mesh.pivot = [0,0,0]
+					
+								-- Turn things off then back on again
+								curMod.enabled = false 
+								curMod.enabled = true
+								curMod.always_deform = false
+								curMod.always_deform = true
+					
 								-- Indicate that the pivot was modified
 								test = true
 							)
 						)
 						
 						-- If all modifiers were looped through, and the pivot was not moved, move it.
-						if test == false then arg.pivot = [0,0,0]
+						if test == false then mesh.pivot = [0,0,0]
 
 						-- Add the information to the report
-						append newReport.editedIds ( getHandleByAnim arg )
+						append newReport.editedIds ( getHandleByAnim mesh )
 					)
 
 					else()
@@ -371,36 +495,43 @@ function rbLibInit  = (
 		-- Adds a skin wrap, and then adds meshes, then converts to skin
 		function skinwrapStealWeights arg_node arg_list =
 		(
-			-- Setup and add the modifier
-			newSkin_Wrap = Skin_Wrap()
-			newSkin_Wrap.engine = 0
-			newSkin_Wrap.weightAllVerts = true
-			newSkin_Wrap.meshList = arg_list
-			addModifier arg_node newSkin_Wrap
-
-			-- Disable the 3dsMax from updating in windows
-			WM_SETREDRAW 	= 11
-			MAX_HWND 		= windows.getMaxHWND()
-			windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
-
-			-- Store selections, and command panel mode
-			sel 	= selection as array
-			mode 	= getCommandPanelTaskMode()
-
-			-- Set command panel to Modify mode, and select the skinwrap, then convert it to skin
-			setCommandPanelTaskMode mode:#modify
-			modPanel.setCurrentObject arg_node.skin_wrap
-			arg_node.skin_wrap.ConvertToSkin on
-
-			-- Get rid of the old skinwrap
-			deleteModifier arg_node newSkin_Wrap
-
-			-- Restore the selection, command panel to previous state
-			if sel.count then select sel else clearselection()
-			setCommandPanelTaskMode mode:mode
-
-			-- Enable 3dsMax to update in windows
-			windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+			try(
+				-- Disable the 3dsMax from updating in windows
+				WM_SETREDRAW 	= 11
+				MAX_HWND 		= windows.getMaxHWND()
+				windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
+	
+				-- Setup and add the modifier
+				newSkin_Wrap = Skin_Wrap()
+				newSkin_Wrap.engine = 0
+				newSkin_Wrap.weightAllVerts = true
+				newSkin_Wrap.meshList = arg_list
+				addModifier arg_node newSkin_Wrap
+	
+				-- Store selections, and command panel mode
+				sel 	= selection as array
+				mode 	= getCommandPanelTaskMode()
+	
+				-- Set command panel to Modify mode, and select the skinwrap, then convert it to skin
+				setCommandPanelTaskMode mode:#modify
+				modPanel.setCurrentObject arg_node.skin_wrap
+				arg_node.skin_wrap.ConvertToSkin on
+	
+				-- Get rid of the old skinwrap
+				deleteModifier arg_node newSkin_Wrap
+	
+				-- Restore the selection, command panel to previous state
+				if sel.count then select sel else clearselection()
+				setCommandPanelTaskMode mode:mode
+	
+				-- Enable 3dsMax to update in windows
+				windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+			)
+			catch
+			(
+				-- Enable 3dsMax to update in windows
+				windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+			)
 		),
 
 --- Mesh Functions ---

@@ -162,8 +162,8 @@ struct rbInterfacesStruct
 		(
 			dotNetControl 	lvMain 						"system.windows.forms.listView" pos:[420,0] height:200 width:575					
 			label 			labelStatus					"Status: initializing"			pos:[0,0]	align:#left	
-			progressbar 	progBar1 					width:990 						pos:[0,0] 	height:6 value:80 color:[0,90,60]
-			progressbar 	progBar2 					width:990 						pos:[0,0] 	height:6 value:50 color:[0,60,90]
+			progressbar 	progBar1 					width:990 						pos:[0,0] 	height:6 value:80 color:[0,180,120]
+			progressbar 	progBar2 					width:990 						pos:[0,0] 	height:6 value:50 color:[0,120,180]
 
 			label 			labRigging					"Rigging:"														pos:[10,10]	
 				label 			labRigScale				"Transforms:"													pos:[24,30]
@@ -198,11 +198,11 @@ struct rbInterfacesStruct
 				button 			btnSkinSafeModsSelect 	"Select"														pos:[325,67] width:85 enabled:false
 
 				label 			labSkinModOp			"Skin modifier operations:"										pos:[24,95]
-				button 			btnSkinDeformReset 		"Skin Deformmations Reset **"				pos:[24,110] width:385 enabled:false
-				button 			btnSkinPivotReset 		"Set pivot of skinned mesh to origin, preserving offset **"		pos:[24,132] width:385 enabled:false
+				button 			btnSkinDeformReset 		"Skin Deformmations Reset"										pos:[24,110] width:385 --enabled:false
+				button 			btnSkinPivotReset 		"Set pivot of skinned mesh to origin, preserving offset"		pos:[24,132] width:385 --enabled:true
 
 				label 			labSkinBinding			"Skin weights and binding:"										pos:[24,160]
-				button 			btnSkinwrapStealDo 		"Skin using Skin Wrap - ( last selected will recive the skin ) **" pos:[24,175] width:385 enabled:false
+				button 			btnSkinwrapStealDo 		"Skin using Skin Wrap - ( last selected will recive the skin )" pos:[24,175] width:385 -- enabled:false
 				button 			btnSkinParent 			"Skin Parent - ( last selected will be the parent ) **"  			pos:[24,197] width:385 enabled:false
 
 				label 			labMeshClean			"Mesh Prep: "													pos:[24,225] 			
@@ -664,19 +664,83 @@ struct rbInterfacesStruct
 					rigBuddy.uiMain.labelStatus.text = ( uniqueSelectList.count as string + " objects selected" )	
 				)
 
-				function fnSkinDeformReset =
+				function fnSkinDeformReset  =
 				(
+					selArr = ( selection as array )
+					rigBuddy.report = rigBuddy.lib.skinDeformReset selArr
+
+					-- Set the list view
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Mesh Reset","Animhandle","Name") #(22,80,80,400)	
+					rows = #()		
+
+					for node in rigBuddy.report do
+					(
+						if node.pass then 
+						(
+							--print node
+							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+							li.UseItemStyleForSubItems = false					
+							li.subitems.add ( "True" )
+							li.subitems.add ( node.animhandle as string )
+							curNode = ( getAnimByHandle node.animhandle )
+							li.subitems.add ( curNode.name  )
+							append rows li
+						)
+					)
+
+					-- Update the LV
+					lvMain.items.addRange rows
+
+					rigBuddy.uiMain.labelStatus.text = ( ( rigBuddy.report.count as string ) + " meshes were reset below their skin modifiers" )	
 				)
 
 				function fnSkinPivotReset =
 				(
-					--TODO: Left off here
 					selArr = ( selection as array )
 					rigBuddy.report = rigBuddy.lib.skinPivotReset selArr
+
+					-- Set the list view
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Pivot Set","Animhandle","Name") #(22,100,80,400)	
+					rows = #()		
+
+					for node in rigBuddy.report.editedIds do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "Origin" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					-- Update the LV
+					lvMain.items.addRange rows
+
+					rigBuddy.uiMain.labelStatus.text = ( ( rigBuddy.report.editedIds.count as string ) + " objects pivot(s) was edited" )	
 				)
 
 				function fnSkinwrapStealDo =
 				(
+					selArr = ( selection as array )
+
+					-- Collect only geometryclass objects
+					meshes = collect3dLib.collectByClass selArr GeometryClass inclusive:true
+					-- Remove boneGeometry from the list
+					meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
+
+					donorMeshes = #()
+					recivingMesh = selArr[selArr.count]
+
+					for i in 1 to ( meshes.count - 1 ) do 
+					(
+						append donorMeshes ( meshes[i] )
+					)
+
+					recivingMesh = meshes[meshes.count] -- the last selected object
+					rigBuddy.report = rigBuddy.lib.skinwrapStealWeights recivingMesh donorMeshes
 				)
 
 				function fnSkinParent =
@@ -1230,7 +1294,7 @@ struct rbInterfacesStruct
 )		
 
 
-debug = false
+debug = true
 
 if debug then
 (
