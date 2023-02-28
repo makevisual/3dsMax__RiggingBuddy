@@ -1230,7 +1230,7 @@ struct rbInterfacesStruct
 )		
 
 
-debug = true
+debug = false
 
 if debug then
 (
