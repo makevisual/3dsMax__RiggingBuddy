@@ -356,6 +356,7 @@ function rbLibInit  = (
 			struct report
 			(
 				pass 		= true,
+				childIds 	= #(),
 				orphanIds 	= #()
 			)
 
@@ -366,58 +367,71 @@ function rbLibInit  = (
 			-- Remove boneGeometry from the list
 			meshes = collect3dLib.collectByClass meshes BoneGeometry inclusive:false
 
-			-- Disable the 3dsMax from updating in windows
-			WM_SETREDRAW 	= 11
-			MAX_HWND 		= windows.getMaxHWND()
-			windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
-
-			-- Store selections, and command panel mode
-			sel 	= selection as array
-			mode 	= getCommandPanelTaskMode()
-
-			-- Go through each of the collected meshes
-			for mesh in meshes do 
-			(
-				curParent = undefined
-
-				-- Case for no passed argument for the parent 
-				if (arg_parent == undefined ) then 
+			try(
+				-- Disable the 3dsMax from updating in windows
+				WM_SETREDRAW 	= 11
+				MAX_HWND 		= windows.getMaxHWND()
+				windows.sendmessage MAX_HWND WM_SETREDRAW 0 0
+	
+				-- Store selections, and command panel mode
+				sel 	= selection as array
+				mode 	= getCommandPanelTaskMode()
+	
+				-- Go through each of the collected meshes
+				for mesh in meshes do 
 				(
-					curParent = mesh.parent
+					curParent = undefined
+	
+					-- Case for no passed argument for the parent 
+					if (arg_parent == undefined ) then 
+					(
+						curParent = mesh.parent
+					)
+					-- Case for passed argument for the parent
+					else 
+					(
+						curParent = arg_parent
+					)
+	
+					-- If it has a parent
+					if ( curParent != undefined ) then 
+					(
+						-- Add a skin modifier, and skin it
+						newSkin = Skin()
+	
+						addModifier mesh newSkin
+						modPanel.setCurrentObject mesh.baseObject
+						modPanel.setCurrentObject mesh.modifiers[#Skin]
+						skinOps.addBone mesh.modifiers[#Skin] curParent 1
+						mesh.modifiers[#Skin].cross_radius = 1
+
+						append newReport.childIds ( getHandleByAnim mesh )
+					)
+					else
+					(
+						-- Otherwise signal not all objects were skinned
+						newReport.pass = false
+						append newReport.orphanIds ( getHandleByAnim mesh )
+					)
+	
+				-- Restore the selection, command panel to previous state
+				if sel.count then select sel else clearselection()
+				setCommandPanelTaskMode mode:mode
+	
+				-- Enable 3dsMax to update in windows
+				windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
 				)
-				-- Case for passed argument for the parent
-				else 
-				(
-					curParent = arg_parent
-				)
-
-				-- If it has a parent
-				if ( curParent != undefined ) then 
-				(
-					-- Add a skin modifier, and skin it
-					newSkin = Skin()
-
-					addModifier mesh newSkin
-					modPanel.setCurrentObject mesh.baseObject
-					modPanel.setCurrentObject mesh.modifiers[#Skin]
-					skinOps.addBone mesh.modifiers[#Skin] curParent 1
-					mesh.modifiers[#Skin].cross_radius = 1
-				)
-				else
-				(
-					-- Otherwise signal not all objects were skinned
-					newReport.pass = false
-					append newReport.orphanIds ( getHandleByAnim mesh )
-				)
-
-			-- Restore the selection, command panel to previous state
-			if sel.count then select sel else clearselection()
-			setCommandPanelTaskMode mode:mode
-
-			-- Enable 3dsMax to update in windows
-			windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
-
 			)
+			catch
+			(
+				-- Restore the selection, command panel to previous state
+				if sel.count then select sel else clearselection()
+				setCommandPanelTaskMode mode:mode
+	
+				-- Enable 3dsMax to update in windows
+				windows.sendmessage MAX_HWND WM_SETREDRAW 1 0
+			)
+
 			-- Returns any mesh objects that were not skinned
 			return newReport
 		),
@@ -643,7 +657,8 @@ function rbLibInit  = (
 				pass 				= true,
 				nonScaled 			= #(),	
 				uniformScaled 		= #(),
-				nonUniformScaled  	= #()
+				nonUniformScaled  	= #(),
+				uniformInverted 	= #()
 			)
 
 			newReport 	= report()
@@ -671,15 +686,23 @@ function rbLibInit  = (
 				(
 					newReport.pass = false
 
-					-- True condition for if all scale dimensions are equal to eachother, within error
-					if ( math3dLib.withinEpsilon node.scale[1] node.scale[2] epsilon ) and ( math3dLib.withinEpsilon node.scale[1] node.scale[3] epsilon ) then 
+					if ( math3dLib.withinEpsilon node.scale[1] -1.0000 epsilon ) and ( math3dLib.withinEpsilon node.scale[2] -1.0000 epsilon ) and ( math3dLib.withinEpsilon node.scale[3] -1.0000 epsilon ) then 
 					(
-						append newReport.uniformScaled ( gethandlebyanim node )
+						append newReport.uniformInverted ( gethandlebyanim node )
 					)
-					
 					else 
 					(
-						append newReport.nonUniformScaled ( gethandlebyanim node )
+
+						-- True condition for if all scale dimensions are equal to eachother, within error
+						if ( math3dLib.withinEpsilon node.scale[1] node.scale[2] epsilon ) and ( math3dLib.withinEpsilon node.scale[1] node.scale[3] epsilon ) then 
+						(
+							append newReport.uniformScaled ( gethandlebyanim node )
+						)
+						
+						else 
+						(
+							append newReport.nonUniformScaled ( gethandlebyanim node )
+						)
 					)
 				)
 			)
@@ -1166,6 +1189,8 @@ function rbLibInit  = (
 		( 
 			curProp = rbLib.collectNodeName arg_node
 			userPropLib.setProp arg_node "NodeName" curProp
+
+			return curProp
 		),
 
 		-- Completed 2023/01/26
@@ -1206,8 +1231,8 @@ function rbLibInit  = (
 
 			newReport.currentVal = rbLib.collectNodeName arg_node
 			newReport.storedVal = rbLib.getUserPropsNodeName arg_node
-			newReport.id = ( getAnimByHandle arg_node )
-			--newReport.id = ( getHandleByAnim arg_node )
+			--newReport.id = ( getAnimByHandle arg_node )
+			newReport.id = ( getHandleByAnim arg_node )
 
 			if newReport.currentVal == newReport.storedVal then
 			(

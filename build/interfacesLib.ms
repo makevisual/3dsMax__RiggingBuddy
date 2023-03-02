@@ -38,7 +38,13 @@ struct rbInterfacesStruct
 			RigBuddy.uiMain.btnNameDupeSelect,
 			RigBuddy.uiMain.btnNameAutoApply,
 			RigBuddy.uiMain.btnNamePrefixSelect,
-			RigBuddy.uiMain.btnNamePrefixApply
+			RigBuddy.uiMain.btnNamePrefixApply,
+			RigBuddy.uiMain.btnUserPropsNameCheckSetSel,
+			RigBuddy.uiMain.btnUserPropsNameCheckMatchSel,
+			RigBuddy.uiMain.btnUserPropsParentCheckSetSel,
+			RigBuddy.uiMain.btnUserPropsParentCheckMatchSel,
+			RigBuddy.uiMain.btnUserPropsWirecolorCheckSetSel,
+			RigBuddy.uiMain.btnUserPropsWirecolorCheckMatchSel
 		)
 
 		-- Disable all interface items that should default to disabled
@@ -181,8 +187,8 @@ struct rbInterfacesStruct
 				label 			labBakePC				"Point Cache modifier:"											pos:[24,30]
 				button 			btnBakePCCheck 			"Check selection for Point Cache modifiers"						pos:[24,45] width:300
 				button 			btnBakePCSelect 		"Select"														pos:[325,45] width:85 enabled:false
-				button 			btnBakePCAdd 			"Add PointCaches above Skins"									pos:[24,68] width:191 -- "Add point cache modifier above skin"
-				button 			btnBakePCSwapSkin		"Replace Skins with PointCaches"								pos:[217,68] width:193 -- "Convert skin modifiers to Point Cache modifiers"
+				button 			btnBakePCAdd 			"Add PointCaches above Skins"									pos:[24,68] width:192 -- "Add point cache modifier above skin"
+				button 			btnBakePCSwapSkin		"Replace Skins with PointCaches"								pos:[218,68] width:192 -- "Convert skin modifiers to Point Cache modifiers"
 				label 			labBakeTFB				"Transform Baker: ( feature pending )"							pos:[24,125] enabled:false
 				label 			labBakePCB				"Point Cache Batch: ( feature pending )"						pos:[24,145] enabled:false
 				label 			labBakeBNS				"Bake N Save: ( feature pending )"								pos:[24,165] enabled:false
@@ -203,7 +209,7 @@ struct rbInterfacesStruct
 
 				label 			labSkinBinding			"Skin weights and binding:"										pos:[24,160]
 				button 			btnSkinwrapStealDo 		"Skin using Skin Wrap - ( last selected will recive the skin )" pos:[24,175] width:385 -- enabled:false
-				button 			btnSkinParent 			"Skin Parent - ( last selected will be the parent ) **"  			pos:[24,197] width:385 enabled:false
+				button 			btnSkinParent 			"Skin Parent - ( last selected will be the parent )"  			pos:[24,197] width:385 -- enabled:false
 
 				label 			labMeshClean			"Mesh Prep: "													pos:[24,225] 			
 				button 			btnMeshClean			"Collapse and reset mesh "										pos:[24,240] width:385
@@ -230,32 +236,41 @@ struct rbInterfacesStruct
 
 			label 			labUserProps				"User Property Tools"			pos:[10,10]	align:#left
 
-				button  		btnUserPropsGetAll 			"Fetch all" 											pos:[10,30] 	width:134
-				button  		btnUserPropsSetAll 			"Store all" 											pos:[144,30] 	width:134
-				button  		btnUserPropsClearAll 		"Clear all" 											pos:[278,30] 	width:134
+				button  		btnUserPropsGetAll 					"- Fetch all" 					pos:[10,30] 	width:134
+				button  		btnUserPropsSetAll 					"Store all" 					pos:[144,30] 	width:134
+				button  		btnUserPropsClearAll 				"Clear all" 					pos:[278,30] 	width:134
 				
-				label 			labUserPropsName			"Name:"													pos:[24,60]	
-				button  		btnUserPropsNameCheck 		"Check name" 											pos:[20,75] 	width:390
-				button  		btnUserPropsNameGet 		"Fetch name" 											pos:[20,97] 	width:130
-				button  		btnUserPropsNameSet 		"Store name" 											pos:[150,97] 	width:130
-				button  		btnUserPropsNameClear 		"Clear name" 											pos:[280,97] 	width:130
+				label 			labUserPropsName					"Name:"							pos:[24,60]	
+				button  		btnUserPropsNameCheckSet 			"Check if stored"	 			pos:[20,75] 	width:130
+				button  		btnUserPropsNameCheckSetSel 		"Select"			 			pos:[150,75] 	width:65 enabled:false
+				button  		btnUserPropsNameCheckMatch 			"Check stored = current"		pos:[215,75] 	width:130
+				button  		btnUserPropsNameCheckMatchSel 		"Select"						pos:[345,75] 	width:65 enabled:false
+				button  		btnUserPropsNameGet 				"- Fetch name" 					pos:[20,97] 	width:130
+				button  		btnUserPropsNameSet 				"Store name" 					pos:[150,97] 	width:130
+				button  		btnUserPropsNameClear 				"- Clear name" 					pos:[280,97] 	width:130
 
-				label 			labUserPropsParent			"Parent:"												pos:[24,130] 
-				button  		btnUserPropsParentCheck 	"Check parent" 											pos:[20,145] 	width:390
-				button  		btnUserPropsParentGet 		"Fetch parent" 											pos:[20,167] 	width:130
-				button  		btnUserPropsParentSet 		"Store parent" 											pos:[150,167]	width:130
-				button  		btnUserPropsParentClear		"Clear parent" 											pos:[280,167] 	width:130
+				label 			labUserPropsParent					"Parent:"						pos:[24,130] 
+				button  		btnUserPropsParentCheckSet 			"Check if Stored"	 			pos:[20,145] 	width:130
+				button  		btnUserPropsParentCheckSetSel 		"Select"			 			pos:[150,145] 	width:65 enabled:false
+				button  		btnUserPropsParentCheckMatch		"Check stored = current"		pos:[215,145] 	width:130
+				button  		btnUserPropsParentCheckMatchSel 	"Select"						pos:[345,145] 	width:65 enabled:false
+				button  		btnUserPropsParentGet 				"- Fetch parent" 				pos:[20,167] 	width:130
+				button  		btnUserPropsParentSet 				"- Store parent" 				pos:[150,167]	width:130
+				button  		btnUserPropsParentClear				"- Clear parent" 				pos:[280,167] 	width:130
 
-				label 			labUserPropsWirecolor		"Wirecolor:"											pos:[24,200] 
-				button  		btnUserPropsWirecolorCheck 	"Check wirecolor" 										pos:[20,215] 	width:390
-				button  		btnUserPropsWirecolorGet 	"Fetch wirecolor" 										pos:[20,237] 	width:130
-				button  		btnUserPropsWirecolorSet 	"Store wirecolor" 										pos:[150,237] 	width:130
-				button  		btnUserPropsWirecolorClear 	"Clear wirecolor" 										pos:[280,237] 	width:130
+				label 			labUserPropsWirecolor				"Wirecolor:"					pos:[24,200] 
+				button  		btnUserPropsWirecolorCheckSet 		"Check if Stored" 				pos:[20,215] 	width:130
+				button  		btnUserPropsWirecolorCheckSetSel	"Select"			 			pos:[150,215] 	width:65 enabled:false
+				button  		btnUserPropsWirecolorCheckMatch		"Check stored = current"		pos:[215,215] 	width:130
+				button  		btnUserPropsWirecolorCheckMatchSel 	"Select"						pos:[345,215] 	width:65 enabled:false
+				button  		btnUserPropsWirecolorGet 			"- Fetch wirecolor" 			pos:[20,237] 	width:130
+				button  		btnUserPropsWirecolorSet 			"- Store wirecolor" 			pos:[150,237] 	width:130
+				button  		btnUserPropsWirecolorClear 			"- Clear wirecolor" 			pos:[280,237] 	width:130
 
-				label 			labUserPropsDate			"Publish Date:"											pos:[24,270] 
-				button  		btnUserPropsDateGet 		"Check publish date" 									pos:[20,285] 	width:130
-				button  		btnUserPropsDateSet 		"Store current date" 									pos:[150,285] 	width:130
-				button  		btnUserPropsDateClear 		"Clear publish date" 									pos:[280,285] 	width:130
+				label 			labUserPropsDate					"Publish Date:"					pos:[24,270] 
+				button  		btnUserPropsDateGet 				"- Check publish date" 			pos:[20,285] 	width:130
+				button  		btnUserPropsDateSet 				"- Store current date" 			pos:[150,285] 	width:130
+				button  		btnUserPropsDateClear 				"- Clear publish date" 			pos:[280,285] 	width:130
 
 			-- Rigging Functions
 				function fnRigScaleCheck =
@@ -275,13 +290,13 @@ struct rbInterfacesStruct
 					rbi.lvSetColumns	lvMain #("","Scaled","Scaling","Animhandle","Name") #(22,50,80,70,348)	
 					rows = #()
 
-					-- TODO: Add handling around duplicate selections
-
 					-- Add items to the UI for uniform scaled objects
 					if newReport.pass == false then 
 					(
 
-						for node in newReport.uniformScaled do 
+						curNodes = ( makeUniqueArray newReport.uniformScaled )
+						-- for node in newReport.uniformScaled do 
+						for node in curNodes do 
 						(
 							-- Make a new List view Item
 							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
@@ -295,13 +310,31 @@ struct rbInterfacesStruct
 						)
 
 						-- Add items to the UI for non-uniform scaled objects
-						for node in newReport.nonUniformScaled do 
+						curNodes = ( makeUniqueArray newReport.nonUniformScaled )
+						-- for node in newReport.nonUniformScaled do 
+						for node in curNodes do 
 						(
 							-- Make a new List view Item
 							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
 							li.UseItemStyleForSubItems = false					
 							li.subitems.add ( "True" )
 							li.subitems.add ( "Non-Uniform" )
+							li.subitems.add ( node as string )
+							curNode = ( getAnimByHandle node )
+							li.subitems.add ( curNode.name  )
+							append rows li
+						)
+
+						-- Add items to the UI for non-uniform scaled objects
+						curNodes = ( makeUniqueArray newReport.uniformInverted )
+						-- for node in newReport.uniformInverted do 
+						for node in curNodes do 
+						(
+							-- Make a new List view Item
+							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+							li.UseItemStyleForSubItems = false					
+							li.subitems.add ( "True" )
+							li.subitems.add ( "Inverted" )
 							li.subitems.add ( node as string )
 							curNode = ( getAnimByHandle node )
 							li.subitems.add ( curNode.name  )
@@ -741,10 +774,48 @@ struct rbInterfacesStruct
 
 					recivingMesh = meshes[meshes.count] -- the last selected object
 					rigBuddy.report = rigBuddy.lib.skinwrapStealWeights recivingMesh donorMeshes
+
+					rigBuddy.uiMain.labelStatus.text = ( ( recivingMesh.name ) + " Skinned using weights of " + ( donorMeshes.count as string ) + " donor meshes" )
 				)
 
 				function fnSkinParent =
 				(
+					selArr = ( selection as array )
+
+					keyObj = selArr[selArr.count]
+					meshesToSkin = #()
+
+					for i in 1 to ( selArr.count - 1 ) do 
+					(
+						append meshesToSkin ( selArr[i] )
+					)
+
+					rigBuddy.report = rigBuddy.lib.skinParent meshesToSkin keyObj
+
+					print rigBuddy.report
+
+					-- Set the list view
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Skinned","Animhandle","Name") #(22,100,80,400)	
+					rows = #()	
+
+					for node in rigBuddy.report.childIds do
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false					
+						li.subitems.add ( "True" )
+						li.subitems.add ( node as string )
+						curNode = ( getAnimByHandle node )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					-- Update the LV
+					lvMain.items.addRange rows
+
+					rigBuddy.uiMain.labelStatus.text = ( ( rigBuddy.report.childIds.count as string ) + " objects skinned to " + keyObj.name )
+
+					select keyObj
 				)
 
 				function fnMeshClean =
@@ -1015,55 +1086,217 @@ struct rbInterfacesStruct
 				)
 
 			-- UserProps Functions
-				function fnUserPropsGetAll =
+				
+				function fnUserPropsClearAll =
+				(
+					selArr = ( selection as array )
+					rigBuddy.report = rigBuddy.lib.userPropClearAll selArr
+
+					rigBuddy.uiMain.labelStatus.text = ( selArr.count as string + " objects user properties were cleared" )	
+				)
+				
+				function fnUserPropsNameCheckSet =
+				(
+					rigBuddy.report = rigBuddy.lib.userPropCheck selArr "NodeName"
+					--rigBuddy.report = rigBuddy.lib.getUserPropsNodeName selArr "NodeName"
+
+					rbi = rigBuddy.interfaces
+					rbi.lvSetColumns	lvMain #("","Stored","Animhandle","Name") #(22,50,80,350)	
+					rows = #()		
+
+					for node in rigBuddy.report.failIds do 
+					(
+						li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+						li.UseItemStyleForSubItems = false
+						li.subitems.add ( "False" )
+						curNode = getAnimByHandle node
+						li.subitems.add ( node as string  )
+						li.subitems.add ( curNode.name  )
+						append rows li
+					)
+
+					-- Update the LV
+					lvMain.items.addRange rows
+
+					-- turn on the select button, if there are any failed objects
+					if rigBuddy.report.failIds.count >= 1 then ( btnUserPropsNameCheckSetSel.enabled = true )
+
+					-- Update the status
+					rigBuddy.uiMain.labelStatus.text = ( rigBuddy.report.failIds.count as string + " Nodes without 'NodeName' stored" )	
+				)
+
+				function fnUserPropsNameCheckSetSel = 
+				(
+					curNodes = rigBuddy.report.failIds 
+					selList = #()
+
+					for node in curNodes do 
+					(
+						curNode = ( getAnimByHandle node )
+						append selList curNode
+					)
+
+					select selList
+					rigBuddy.uiMain.labelStatus.text = ( selList.count as string + " nodes selected" )	
+				)
+
+				function fnUserPropsNameCheckMatch =
+				(
+					results = #()
+					selArr = ( selection as array )
+
+					for sel in selArr do 
+					(
+						result = rigBuddy.lib.compareUserPropsNodeName sel
+						append results result 
+					)
+
+					rigBuddy.report = results
+
+					failReports = #()
+					for report in rigBuddy.report do 
+					(
+						if report.pass == false then 
+						(
+							append failReports report
+						)
+					)
+
+
+					print rigBuddy.report
+
+					print "-- fails"
+					print failReports
+
+
+				)
+
+				function fnUserPropsNameCheckMatchSel = 
+				(
+
+				)
+				
+				-- TOD: was working on this
+				function fnUserPropsNameGet arg_Verbose =
+				(
+					selArr = ( selection as array )
+
+					for node in selArr do 
+					(
+						rigBuddy.lib.getUserPropsNodeName node
+					)
+				)
+				
+				function fnUserPropsNameSet arg_Verbose =
+				(
+					-- Setup some variables
+					selArr = ( selection as array )
+					curFloat = 0.000
+					
+					if arg_Verbose then 
+					(
+						-- Set the list view
+						rbi = rigBuddy.interfaces
+						rbi.lvSetColumns	lvMain #("","Stored","Stored 'NodeName'") #(22,260,260)	
+						rows = #()		
+					)
+
+					-- For each node, seth the property
+					for node in selArr do 
+					(
+						curFloat += 1.000 															-- increment the progressbar float val
+						result = rigBuddy.lib.setUserPropsNodeName node								-- Set the user property
+						rigBuddy.uiMain.progBar1.value = ( ( curFloat / selArr.count ) * 100 ) 		-- Update the progressbar
+
+						if arg_Verbose then 
+						(
+							li=dotNetObject "System.Windows.Forms.ListViewItem" ""
+							li.UseItemStyleForSubItems = false					
+							li.subitems.add ( node.name  )
+							li.subitems.add ( result as string )
+							append rows li
+						)
+					)
+
+					if arg_Verbose then 
+					(
+						-- Update the LV
+						lvMain.items.addRange rows
+					)
+
+					-- Update the status
+					rigBuddy.uiMain.labelStatus.text = ( selArr.count as string + " Node names stored" )	
+				)
+				
+				function fnUserPropsNameClear =
+				(
+				)
+
+				function fnUserPropsParentCheckSet =
 				(
 				)
 				
-				function fnUserPropsSetAll =
+				function fnUserPropsParentCheckSetSel =
+				(
+				)
+
+				function fnUserPropsParentCheckMatch =
+				(
+				)
+
+				function fnUserPropsParentCheckMatchSel = 
+				(
+				)
+
+				function fnUserPropsParentGet arg_Verbose =
 				(
 				)
 				
-				function fnUserPropsNameCheck =
+				function fnUserPropsParentSet arg_Verbose =
 				(
 				)
 				
-				function fnUserPropsNameGet =
+				function fnUserPropsParentClear =
+				(
+				)
+
+				function fnUserPropsWirecolorCheckSet =
 				(
 				)
 				
-				function fnUserPropsNameSet =
+				function fnUserPropsWirecolorCheckSetSel =
+				(
+				)
+
+				function fnUserPropsWirecolorCheckMatch =
+				(
+				)
+
+				function fnUserPropsWirecolorCheckMatchSel =
+				(
+				)
+
+				function fnUserPropsWirecolorGet arg_Verbose =
 				(
 				)
 				
-				function fnUserPropsParentCheck =
+				function fnUserPropsWirecolorSet arg_Verbose =
+				(
+				)
+
+				function fnUserPropsWirecolorClear =
 				(
 				)
 				
-				function fnUserPropsParentGet =
+				function fnUserPropsDateGet arg_Verbose =
 				(
 				)
 				
-				function fnUserPropsParentSet =
+				function fnUserPropsDateSet arg_Verbose =
 				(
 				)
-				
-				function fnUserPropsWirecolorCheck =
-				(
-				)
-				
-				function fnUserPropsWirecolorGet =
-				(
-				)
-				
-				function fnUserPropsWirecolorSet =
-				(
-				)
-				
-				function fnUserPropsDateGet =
-				(
-				)
-				
-				function fnUserPropsDateSet =
+
+				function fnUserPropsDateClear =
 				(
 				)
 
@@ -1105,19 +1338,48 @@ struct rbInterfacesStruct
 				on btnNameUPSet					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnNameUPSet() ) )
 
 			-- UserProps event handlers
-				on btnUserPropsGetAll 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsGetAll() ) )
-				on btnUserPropsSetAll 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsSetAll() ) )
-				on btnUserPropsNameCheck		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsNameCheck() )
-				on btnUserPropsNameGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameGet() ) )
-				on btnUserPropsNameSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameSet() ) )
-				on btnUserPropsParentCheck 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsParentCheck() )
-				on btnUserPropsParentGet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentGet() ) )
-				on btnUserPropsParentSet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentSet() ) )
-				on btnUserPropsWirecolorCheck 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsWirecolorCheck() )
-				on btnUserPropsWirecolorGet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorGet() ) )
-				on btnUserPropsWirecolorSet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorSet() ) )
-				on btnUserPropsDateGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateGet() ) )
-				on btnUserPropsDateSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateSet() ) )
+				on btnUserPropsGetAll 			pressed do
+				(
+					rigBuddy.interfaces.uiMainModeReset()
+					-- fnUserPropsNameSet true 
+				)
+
+				on btnUserPropsSetAll 			pressed do
+				(
+					rigBuddy.interfaces.uiMainModeReset()
+					-- Each of the operations, with verbose set to false
+					fnUserPropsNameSet false
+				)
+
+				on btnUserPropsClearAll 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsClearAll() ) )
+
+				on btnUserPropsNameCheckSet				pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsNameCheckSet() )
+				on btnUserPropsNameCheckSetSel			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameCheckSetSel() ) )
+				on btnUserPropsNameCheckMatch			pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsNameCheckMatch() )
+				on btnUserPropsNameCheckMatchSel		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameCheckMatchSel() ) )
+				on btnUserPropsNameGet 					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameGet true ) )
+				on btnUserPropsNameSet 					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameSet true  ) )
+				on btnUserPropsNameClear 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameClear() ) )
+				
+				on btnUserPropsParentCheckSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentCheckSet() ) )
+				on btnUserPropsParentCheckSetSel 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentCheckSetSel() ) )
+				on btnUserPropsParentCheckMatch 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentCheckMatch() ) )
+				on btnUserPropsParentCheckMatchSel 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentCheckMatchSel() ) )
+				on btnUserPropsParentGet 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentGet true ) )
+				on btnUserPropsParentSet 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentSet true ) )
+				on btnUserPropsParentClear 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentClear() ) )
+				
+				on btnUserPropsWirecolorCheckSet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsWirecolorCheckSet() )
+				on btnUserPropsWirecolorCheckSetSel 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorCheckSetSel() ) )
+				on btnUserPropsWirecolorCheckMatch 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsWirecolorCheckMatch() )
+				on btnUserPropsWirecolorCheckMatchSel	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorCheckMatchSel() ) )
+				on btnUserPropsWirecolorGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorGet true ) )
+				on btnUserPropsWirecolorSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorSet true ) )
+				on btnUserPropsWirecolorClear 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorClear() ) )
+
+				on btnUserPropsDateGet 					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateGet true ) )
+				on btnUserPropsDateSet 					pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateSet true ) )
+				on btnUserPropsDateClear 				pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateClear() ) )
 
 			-- UI Event Handlers
 				-- Initalize the interface when it opens, mostly storing UI items for visibility operations later
@@ -1191,17 +1453,26 @@ struct rbInterfacesStruct
 					append curLi btnUserPropsSetAll
 					append curLi btnUserPropsClearAll
 					append curLi labUserPropsName
-					append curLi btnUserPropsNameCheck
+					append curLi btnUserPropsNameCheckSet
+					append curLi btnUserPropsNameCheckSetSel
+					append curLi btnUserPropsNameCheckMatch
+					append curLi btnUserPropsNameCheckMatchSel
 					append curLi btnUserPropsNameGet
 					append curLi btnUserPropsNameSet
 					append curLi btnUserPropsNameClear
 					append curLi labUserPropsParent
-					append curLi btnUserPropsParentCheck
+					append curLi btnUserPropsParentCheckSet
+					append curLi btnUserPropsParentCheckSetSel
+					append curLi btnUserPropsParentCheckMatch
+					append curLi btnUserPropsParentCheckMatchSel
 					append curLi btnUserPropsParentGet
 					append curLi btnUserPropsParentSet
 					append curLi btnUserPropsParentClear
 					append curLi labUserPropsWirecolor
-					append curLi btnUserPropsWirecolorCheck
+					append curLi btnUserPropsWirecolorCheckSet
+					append curLi btnUserPropsWirecolorCheckSetSel
+					append curLi btnUserPropsWirecolorCheckMatch
+					append curLi btnUserPropsWirecolorCheckMatchSel
 					append curLi btnUserPropsWirecolorGet
 					append curLi btnUserPropsWirecolorSet
 					append curLi btnUserPropsWirecolorClear
@@ -1219,8 +1490,8 @@ struct rbInterfacesStruct
 	
 					-- TODO: Remove this stuff, because it is for debug mode
 					-- Initialize the toolset to the default mode
-					rigBuddy.interfaces.uiMainMode "Skinning"
-					-- rigBuddy.interfaces.uiMainMode "User Properties"
+					-- rigBuddy.interfaces.uiMainMode "Skinning"
+					rigBuddy.interfaces.uiMainMode "User Properties"
 					-- rigBuddy.interfaces.uiMainMode "Baking"
 					-- rigBuddy.interfaces.uiMainMode "Rigging"
 				)
