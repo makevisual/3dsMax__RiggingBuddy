@@ -1239,11 +1239,11 @@ struct rbInterfacesStruct
 				(
 				)
 				
-				function fnUserPropsParentGet =
+				function fnUserPropsParentGet arg_Verbose =
 				(
 				)
 				
-				function fnUserPropsParentSet =
+				function fnUserPropsParentSet arg_Verbose =
 				(
 
 					-- Setup some variables
@@ -1291,7 +1291,7 @@ struct rbInterfacesStruct
 				(
 				)
 				
-				function fnUserPropsWirecolorGet =
+				function fnUserPropsWirecolorGet arg_Verbose =
 				(
 				)
 				
@@ -1299,11 +1299,11 @@ struct rbInterfacesStruct
 --				(
 --				)
 				
-				function fnUserPropsDateGet =
+				function fnUserPropsDateGet arg_Verbose =
 				(
 				)
 				
-				function fnUserPropsDateSet =
+				function fnUserPropsDateSet arg_Verbose =
 				(
 				)
 
@@ -1348,16 +1348,16 @@ struct rbInterfacesStruct
 				on btnUserPropsGetAll 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsGetAll() ) )
 				on btnUserPropsSetAll 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsSetAll() ) )
 				on btnUserPropsNameCheck		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsNameCheck() )
-				on btnUserPropsNameGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameGet() ) )
-				on btnUserPropsNameSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameSet() ) )
+				on btnUserPropsNameGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameGet true ) )
+				on btnUserPropsNameSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsNameSet true ) )
 				on btnUserPropsParentCheck 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsParentCheck() )
-				on btnUserPropsParentGet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentGet() ) )
-				on btnUserPropsParentSet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentSet() ) )
+				on btnUserPropsParentGet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentGet true ) )
+				on btnUserPropsParentSet 		pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsParentSet true ) )
 				on btnUserPropsWirecolorCheck 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); fnUserPropsWirecolorCheck() )
-				on btnUserPropsWirecolorGet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorGet() ) )
-				on btnUserPropsWirecolorSet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorSet() ) )
-				on btnUserPropsDateGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateGet() ) )
-				on btnUserPropsDateSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateSet() ) )
+				on btnUserPropsWirecolorGet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorGet true ) )
+				on btnUserPropsWirecolorSet 	pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsWirecolorSet true ) )
+				on btnUserPropsDateGet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateGet true ) )
+				on btnUserPropsDateSet 			pressed do ( rigBuddy.interfaces.uiMainModeReset(); with undo on ( fnUserPropsDateSet true ) )
 
 			-- UI Event Handlers
 				-- Initalize the interface when it opens, mostly storing UI items for visibility operations later
